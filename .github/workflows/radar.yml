@@ -47,11 +47,11 @@ jobs:
       - name: Construir snapshot interoperable
         run: PYTHONPATH=src python -m radar_prensa.cli --source "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json" --output data/exports
 
-      - name: Validar productos v0.2.1
+      - name: Validar productos v0.3
         shell: bash
         run: |
           set -euo pipefail
-          for f in documents events evidence entities territories entity_mentions event_entities event_territories relationships sectors temporal_assertions signals; do
+          for f in documents events evidence entities territories entity_mentions event_entities event_territories relationships sectors temporal_assertions entity_activity phenomenon_windows territorial_windows event_clusters signals; do
             test -f "data/exports/${f}.jsonl"
           done
           test -s data/exports/manifest.json
@@ -61,11 +61,17 @@ jobs:
           m=json.loads(Path('data/exports/manifest.json').read_text())
           print(json.dumps(m, indent=2, ensure_ascii=False))
           assert m['producer_id']=='radar_prensa'
-          assert m['version']=='0.2.1'
+          assert m['version']=='0.3.0'
           assert m['counts']['documents'] == m['counts']['events']
           assert m['quality']['geography_catalog'] == {'regions': 16, 'provinces': 56, 'communes': 346}
           assert 'occurrence_time_coverage_pct' in m['quality']
           assert 'territorial_coverage_pct' in m['quality']
+          assert 'longitudinal' in m['quality']
+          assert m['analysis']['longitudinal_policy']['time_basis'] == 'PUBLICATION_DATE'
+          assert m['counts']['entity_activity'] >= 0
+          assert m['counts']['phenomenon_windows'] >= 0
+          assert m['counts']['territorial_windows'] >= 0
+          assert m['counts']['event_clusters'] >= 0
           PY
 
       - name: Publicar snapshot en rama radar-state

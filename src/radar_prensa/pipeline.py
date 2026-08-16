@@ -8,6 +8,7 @@ from . import PRODUCER_ID, __version__
 from .entities import extract_entities, extract_explicit_relationships
 from .geography import extract_territories, geography_catalog_stats
 from .importer import extract_records, load_monitor
+from .longitudinal import derive_longitudinal
 from .taxonomy import classify_text
 from .temporal import event_temporal, publication_time
 from .utils import canonical_url, now_iso, sha256_text, stable_id, write_jsonl
@@ -283,11 +284,14 @@ def derive_context_signals(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
     return signals
 
 
-def _quality_metrics(bundle: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+def _quality_metrics(bundle: dict[str, list[dict[str, Any]]], longitudinal: dict[str, Any]) -> dict[str, Any]:
     events = bundle["events"]
     known_temporal = [e for e in events if e.get("temporal", {}).get("occurrence_date_precision") != "UNKNOWN"]
     geo_events = [e for e in events if e.get("territory_ids")]
     precision = Counter(e.get("temporal", {}).get("occurrence_date_precision", "UNKNOWN") for e in events)
+    longitudinal_signals = longitudinal.get("signals", [])
+    signal_types = Counter(s.get("signal_type", "UNKNOWN") for s in longitudinal_signals)
+    recurrent = [r for r in longitudinal.get("entity_activity", []) if r.get("recurrence_status") == "RECURRENT"]
     return {
         "geography_catalog": geography_catalog_stats(),
         "events_with_territory": len(geo_events),
@@ -295,6 +299,16 @@ def _quality_metrics(bundle: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
         "events_with_occurrence_time": len(known_temporal),
         "occurrence_time_coverage_pct": round(100 * len(known_temporal) / len(events), 2) if events else 0.0,
         "temporal_precision": dict(sorted(precision.items())),
+        "longitudinal": {
+            "analysis_window": longitudinal.get("analysis_window"),
+            "entity_activity_profiles": len(longitudinal.get("entity_activity", [])),
+            "recurrent_entities": len(recurrent),
+            "phenomenon_windows": len(longitudinal.get("phenomenon_windows", [])),
+            "territorial_windows": len(longitudinal.get("territorial_windows", [])),
+            "event_clusters": len(longitudinal.get("event_clusters", [])),
+            "longitudinal_signal_count": len(longitudinal_signals),
+            "longitudinal_signal_types": dict(sorted(signal_types.items())),
+        },
     }
 
 
@@ -302,25 +316,49 @@ def run(source: str, output: str = "data/exports") -> dict[str, Any]:
     payload = load_monitor(source)
     retrieved_at = now_iso()
     bundle = transform(payload, retrieved_at=retrieved_at)
-    signals = derive_context_signals(bundle)
+    longitudinal = derive_longitudinal(bundle)
+    context_signals = derive_context_signals(bundle)
+    signals = sorted(
+        context_signals + longitudinal["signals"],
+        key=lambda row: (row.get("signal_type", ""), row.get("signal_id", "")),
+    )
+
+    longitudinal_products = {
+        "entity_activity": longitudinal["entity_activity"],
+        "phenomenon_windows": longitudinal["phenomenon_windows"],
+        "territorial_windows": longitudinal["territorial_windows"],
+        "event_clusters": longitudinal["event_clusters"],
+    }
 
     out = Path(output)
     out.mkdir(parents=True, exist_ok=True)
     for key, rows in bundle.items():
         write_jsonl(out / f"{key}.jsonl", rows)
+    for key, rows in longitudinal_products.items():
+        write_jsonl(out / f"{key}.jsonl", rows)
     write_jsonl(out / "signals.jsonl", signals)
+
+    counts = {k: len(v) for k, v in bundle.items()}
+    counts.update({k: len(v) for k, v in longitudinal_products.items()})
+    counts["signals"] = len(signals)
+    counts["longitudinal_signals"] = len(longitudinal["signals"])
 
     manifest = {
         "producer_id": PRODUCER_ID,
         "version": __version__,
         "generated_at": retrieved_at,
         "input": str(source),
-        "counts": {**{k: len(v) for k, v in bundle.items()}, "signals": len(signals)},
-        "quality": _quality_metrics(bundle),
+        "counts": counts,
+        "quality": _quality_metrics(bundle, longitudinal),
+        "analysis": {
+            "longitudinal_policy": longitudinal["policy"],
+            "analysis_window": longitudinal["analysis_window"],
+        },
         "contracts": {
             "events": "Intelligence_Fusion_Layer/schemas/event.schema.json",
             "evidence": "Intelligence_Fusion_Layer/schemas/evidence.schema.json",
             "entities": "Intelligence_Fusion_Layer/schemas/entity.schema.json",
+            "signals": "Radar_Prensa v0.3 CONTEXT_ONLY signals; adapter formal al Signals Registry pendiente de estabilización transversal.",
         },
         "guardrails": [
             "Prensa es contexto y evidencia secundaria; no acredita hechos por sí sola.",
@@ -329,6 +367,9 @@ def run(source: str, output: str = "data/exports") -> dict[str, Any]:
             "Mención, coaparición o proximidad territorial no propaga riesgo AML.",
             "La jerarquía comuna/provincia→región es contexto geográfico, no relación entre entidades.",
             "Las señales de Radar Prensa son CONTEXT_ONLY y no son probabilidad de delito o LA/FT.",
+            "La inteligencia longitudinal usa PUBLICATION_DATE como baseline para evitar sesgos por cobertura parcial de fecha de ocurrencia.",
+            "Emergencia y momentum significan cambio de cobertura periodística respecto de un baseline; no cambio probado de incidencia delictual.",
+            "Los clusters son agrupaciones analíticas para revisión humana y no consolidan automáticamente publicaciones en un mismo caso.",
         ],
     }
     (out / "manifest.json").write_text(__import__("json").dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
