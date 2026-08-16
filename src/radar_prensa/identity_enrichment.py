@@ -41,6 +41,13 @@ def valid_chilean_rut(value: Any) -> bool:
     return observed == expected
 
 
+def global_rut_entity_id(value: Any) -> str:
+    rut = normalize_rut(value)
+    if not rut or not valid_chilean_rut(rut):
+        raise ValueError("GLOBAL_RUT_ENTITY_ID_REQUIRES_VALID_CHILEAN_RUT")
+    return f"ENT-RUT-{rut}"
+
+
 def _reference_index(rows: Iterable[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     out: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
@@ -138,7 +145,7 @@ def _apply_reference_index(
         existing_rut = normalize_rut(entity.get("rut_normalized"))
         if existing_rut:
             if valid_chilean_rut(existing_rut):
-                canonical_id = stable_id("entity:press", existing_rut)
+                canonical_id = global_rut_entity_id(existing_rut)
                 remap[before_id] = canonical_id
                 entity["entity_id"] = canonical_id
                 entity["rut_normalized"] = existing_rut
@@ -162,7 +169,7 @@ def _apply_reference_index(
         if status == "RESOLVED" and match is not None:
             rut = normalize_rut(match.get("rut"))
             assert rut is not None
-            canonical_id = stable_id("entity:press", rut)
+            canonical_id = global_rut_entity_id(rut)
             entity["entity_id"] = canonical_id
             entity["rut_normalized"] = rut
             entity["identity_method"] = "RUT_EXACT"
@@ -177,6 +184,7 @@ def _apply_reference_index(
                 "reference_asset_digest": meta.get("asset_digest") or meta.get("digest"),
                 "reference_dataset": "entity_search.parquet",
                 "match_cardinality": 1,
+                "global_entity_key": canonical_id,
                 "guardrail": GUARDRAIL,
             }
             remap[before_id] = canonical_id
@@ -202,6 +210,7 @@ def _apply_reference_index(
             "reference_asset_digest": meta.get("asset_digest") or meta.get("digest"),
             "reference_dataset": "entity_search.parquet",
             "match_cardinality": cardinality,
+            "global_entity_key": remap.get(before_id) if status == "RESOLVED" else None,
             "guardrail": GUARDRAIL,
         })
 
@@ -275,6 +284,7 @@ def _apply_reference_index(
         "reference_radar_id": SII_RADAR_ID,
         "reference_release_tag": meta.get("release_tag") or "fusion-v1",
         "reference_asset_digest": meta.get("asset_digest") or meta.get("digest"),
+        "global_entity_key_policy": "ENT-RUT-{RUT_NORMALIZADO}",
         "attempted": attempted,
         "resolved": resolved,
         "ambiguous": ambiguous,
@@ -303,6 +313,7 @@ def enrich_bundle_with_sii(
         return {
             "status": "NOT_RUN_NO_REFERENCE",
             "method": METHOD,
+            "global_entity_key_policy": "ENT-RUT-{RUT_NORMALIZADO}",
             "attempted": 0,
             "resolved": 0,
             "ambiguous": 0,
