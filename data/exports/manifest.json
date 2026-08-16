@@ -1,21 +1,21 @@
 {
   "producer_id": "radar_prensa",
-  "version": "0.2.0",
-  "generated_at": "2026-08-16T15:17:22.115018Z",
+  "version": "0.2.1",
+  "generated_at": "2026-08-16T15:24:11.196902Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 369,
     "events": 369,
     "evidence": 369,
     "entities": 2233,
-    "territories": 110,
+    "territories": 76,
     "entity_mentions": 5822,
     "event_entities": 5822,
-    "event_territories": 777,
+    "event_territories": 538,
     "relationships": 342,
     "sectors": 9,
     "temporal_assertions": 112,
-    "signals": 468
+    "signals": 367
   },
   "quality": {
     "geography_catalog": {
@@ -23,8 +23,8 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 201,
-    "territorial_coverage_pct": 54.47,
+    "events_with_territory": 180,
+    "territorial_coverage_pct": 48.78,
     "events_with_occurrence_time": 112,
     "occurrence_time_coverage_pct": 30.35,
     "temporal_precision": {
