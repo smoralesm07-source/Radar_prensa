@@ -1,18 +1,18 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.2.1",
-  "generated_at": "2026-08-16T15:24:11.196902Z",
+  "generated_at": "2026-08-16T15:39:52.643206Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 369,
     "events": 369,
     "evidence": 369,
-    "entities": 2233,
+    "entities": 2234,
     "territories": 76,
-    "entity_mentions": 5822,
-    "event_entities": 5822,
+    "entity_mentions": 5836,
+    "event_entities": 5836,
     "event_territories": 538,
-    "relationships": 342,
+    "relationships": 346,
     "sectors": 9,
     "temporal_assertions": 112,
     "signals": 367
