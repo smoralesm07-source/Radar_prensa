@@ -47,7 +47,7 @@ jobs:
       - name: Construir snapshot interoperable
         run: PYTHONPATH=src python -m radar_prensa.cli --source "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json" --output data/exports
 
-      - name: Validar productos v0.3
+      - name: Validar productos v0.3.1
         shell: bash
         run: |
           set -euo pipefail
@@ -58,20 +58,44 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
+
+          def rows(name):
+              p=Path(f'data/exports/{name}.jsonl')
+              return [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+
           m=json.loads(Path('data/exports/manifest.json').read_text())
+          documents=rows('documents')
+          events=rows('events')
+          clusters=rows('event_clusters')
+          signals=rows('signals')
           print(json.dumps(m, indent=2, ensure_ascii=False))
+
           assert m['producer_id']=='radar_prensa'
-          assert m['version']=='0.3.0'
+          assert m['version']=='0.3.1'
           assert m['counts']['documents'] == m['counts']['events']
+          assert len({r['document_id'] for r in documents}) == len(documents), 'document_id duplicado'
+          assert len({r['event_id'] for r in events}) == len(events), 'event_id duplicado'
           assert m['quality']['geography_catalog'] == {'regions': 16, 'provinces': 56, 'communes': 346}
           assert 'occurrence_time_coverage_pct' in m['quality']
           assert 'territorial_coverage_pct' in m['quality']
           assert 'longitudinal' in m['quality']
-          assert m['analysis']['longitudinal_policy']['time_basis'] == 'PUBLICATION_DATE'
-          assert m['counts']['entity_activity'] >= 0
-          assert m['counts']['phenomenon_windows'] >= 0
-          assert m['counts']['territorial_windows'] >= 0
-          assert m['counts']['event_clusters'] >= 0
+          policy=m['analysis']['longitudinal_policy']
+          assert policy['time_basis'] == 'PUBLICATION_DATE'
+          assert policy['version'] == '1.1'
+          assert policy['event_cluster']['method'] == 'STABLE_ENTITY_ANCHOR'
+          assert policy['event_cluster']['transitive_bridging'] is False
+
+          for c in clusters:
+              assert c['cluster_type'] == 'STABLE_ENTITY_ANCHOR'
+              assert len(c['event_ids']) == len(set(c['event_ids']))
+              assert c['dataset_share_pct'] <= 15.0
+              assert c['event_count'] < max(50, int(len(events)*0.20)), 'cluster anormalmente grande'
+
+          for s in signals:
+              if 'event_ids' in s:
+                  assert len(s['event_ids']) == len(set(s['event_ids']))
+              if s.get('signal_type') in {'PHENOMENON_MOMENTUM','PHENOMENON_EMERGENCE'}:
+                  assert s.get('scope',{}).get('phenomenon') != 'sartor'
           PY
 
       - name: Publicar snapshot en rama radar-state
