@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 from typing import Any
+
+from .identity_enrichment import normalize_rut, valid_chilean_rut
 from .utils import norm_text, stable_id
 
 LEGAL_SUFFIX = re.compile(r"\b(spa|s\.a\.?|ltda\.?|eirl|e\.i\.r\.l\.?|fundacion|corporacion|asociacion|agf)\b", re.I)
@@ -28,6 +30,15 @@ def _iter_upstream(record: dict[str, Any]):
             yield from value
 
 
+def _validated_rut(value: Any) -> tuple[str | None, str | None]:
+    normalized = normalize_rut(value)
+    if not normalized:
+        return None, None
+    if valid_chilean_rut(normalized):
+        return normalized, None
+    return None, normalized
+
+
 def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -37,7 +48,8 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
             raw_type = item.get("tipo") or item.get("type")
             nature = item.get("naturaleza")
             ruts = item.get("ruts") if isinstance(item.get("ruts"), list) else []
-            rut = item.get("rut") or item.get("rut_normalized") or (ruts[0] if ruts else None)
+            raw_rut = item.get("rut") or item.get("rut_normalized") or (ruts[0] if ruts else None)
+            rut, invalid_rut = _validated_rut(raw_rut)
             confidence = item.get("confianza_score") or item.get("score") or item.get("confidence") or 0.75
             upstream_id = item.get("entidad_id") or item.get("entity_id")
             roles = item.get("roles") if isinstance(item.get("roles"), list) else []
@@ -48,6 +60,7 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
             raw_type = None
             nature = None
             rut = None
+            invalid_rut = None
             confidence = 0.60
             upstream_id = None
             roles = []
@@ -58,26 +71,33 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
         if entity_id in seen:
             continue
         seen.add(entity_id)
+        attributes = {
+            "origin": "monitor_upstream",
+            "upstream_entity_id": upstream_id,
+            "upstream_nature": nature,
+            "requires_validation": bool(item.get("requiere_validacion")) if isinstance(item, dict) else False,
+        }
+        if invalid_rut:
+            attributes["invalid_rut_rejected"] = invalid_rut
+            attributes["requires_validation"] = True
         out.append({
             "entity_id": entity_id,
             "entity_type": entity_type,
             "canonical_name": name,
-            "rut_normalized": str(rut).replace(".", "").upper() if rut else None,
+            "rut_normalized": rut,
             "aliases": [],
             "roles": sorted(set(str(r) for r in (["PRESS_MENTION"] + roles) if r)),
             "producer_ids": ["radar_prensa"],
             "evidence_ids": [evidence_id],
             "identity_method": "RUT_EXACT" if rut else "SOURCE_NATIVE",
-            "identity_confidence": max(0.0, min(float(confidence), 1.0)),
-            "attributes": {
-                "origin": "monitor_upstream",
-                "upstream_entity_id": upstream_id,
-                "upstream_nature": nature,
-                "requires_validation": bool(item.get("requiere_validacion")) if isinstance(item, dict) else False,
-            },
+            "identity_confidence": 1.0 if rut else max(0.0, min(float(confidence), 1.0)),
+            "attributes": attributes,
         })
     text = " ".join(str(record.get(k) or "") for k in ("titulo", "title", "tema", "resumen", "texto", "contenido"))
-    for rut in RUT.findall(text):
+    for raw_rut in RUT.findall(text):
+        rut, invalid_rut = _validated_rut(raw_rut)
+        if not rut:
+            continue
         entity_id = stable_id("entity:press", rut)
         if entity_id in seen:
             continue
@@ -86,14 +106,14 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
             "entity_id": entity_id,
             "entity_type": "UNKNOWN",
             "canonical_name": None,
-            "rut_normalized": rut.replace(".", "").upper(),
+            "rut_normalized": rut,
             "aliases": [],
             "roles": ["PRESS_MENTION"],
             "producer_ids": ["radar_prensa"],
             "evidence_ids": [evidence_id],
             "identity_method": "RUT_EXACT",
-            "identity_confidence": 0.99,
-            "attributes": {"origin": "explicit_rut_regex", "upstream_entity_id": None},
+            "identity_confidence": 1.0,
+            "attributes": {"origin": "explicit_valid_rut_regex", "upstream_entity_id": None},
         })
     return out
 
