@@ -1,4 +1,4 @@
-"""Radar Prensa v0.3.1."""
+"""Radar Prensa v0.4.0."""
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 PRODUCER_ID = "radar_prensa"

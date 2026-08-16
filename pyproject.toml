@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "radar-prensa"
-version = "0.3.1"
-description = "Radar OSINT de prensa contextual y longitudinal interoperable para inteligencia financiera"
+version = "0.4.0"
+description = "Radar OSINT de prensa contextual, longitudinal e interoperable con resolución de identidad gobernada"
 requires-python = ">=3.11"
 dependencies = []
 
