@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "semantics": "CONTEXT_ONLY",
+  "description": "Taxonomía inicial de fenómenos de prensa. Una coincidencia contextual no acredita delito, LA/FT ni responsabilidad.",
+  "categories": [
+    "lavado_activos",
+    "financiamiento_terrorismo",
+    "corrupcion",
+    "contrabando",
+    "narcotrafico",
+    "trata_personas",
+    "crimen_organizado",
+    "delitos_economicos",
+    "evasion_tributaria",
+    "sancion_regulatoria",
+    "investigacion_penal",
+    "operativo_policial"
+  ]
+}
