@@ -1,0 +1,30 @@
+{
+  "producer_id": "radar_prensa",
+  "version": "0.1.0",
+  "generated_at": "2026-08-16T15:02:34.230062Z",
+  "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
+  "counts": {
+    "documents": 369,
+    "events": 369,
+    "evidence": 369,
+    "entities": 2233,
+    "territories": 16,
+    "entity_mentions": 5822,
+    "event_entities": 5822,
+    "event_territories": 55,
+    "relationships": 342,
+    "sectors": 9,
+    "signals": 136
+  },
+  "contracts": {
+    "events": "Intelligence_Fusion_Layer/schemas/event.schema.json",
+    "evidence": "Intelligence_Fusion_Layer/schemas/evidence.schema.json",
+    "entities": "Intelligence_Fusion_Layer/schemas/entity.schema.json"
+  },
+  "guardrails": [
+    "Prensa es contexto y evidencia secundaria; no acredita hechos por sí sola.",
+    "Fecha de publicación no se usa automáticamente como fecha de ocurrencia.",
+    "Mención, coaparición o proximidad territorial no propaga riesgo AML.",
+    "Las señales de Radar Prensa son CONTEXT_ONLY y no son probabilidad de delito o LA/FT."
+  ]
+}
