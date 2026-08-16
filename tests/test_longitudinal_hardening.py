@@ -49,14 +49,16 @@ class LongitudinalHardeningTests(unittest.TestCase):
         self.assertEqual(len(extract_records(payload)), 1)
 
     def test_cluster_does_not_bridge_transitively_across_different_anchors(self):
-        bundle = {
-            "entities": [entity("A", "Persona A"), entity("B", "Persona B")],
-            "events": [
-                event("e1", "d1", "2026-08-10", ["A"], "Medio A"),
-                event("e2", "d2", "2026-08-11", ["A", "B"], "Medio B"),
-                event("e3", "d3", "2026-08-12", ["B"], "Medio C"),
-            ],
-        }
+        core = [
+            event("e1", "d1", "2026-08-10", ["A"], "Medio A"),
+            event("e2", "d2", "2026-08-11", ["A", "B"], "Medio B"),
+            event("e3", "d3", "2026-08-12", ["B"], "Medio C"),
+        ]
+        fillers = [
+            event(f"f{i}", f"fd{i}", f"2026-07-{(i % 28) + 1:02d}", [], f"Filler {i % 5}")
+            for i in range(47)
+        ]
+        bundle = {"entities": [entity("A", "Persona A"), entity("B", "Persona B")], "events": core + fillers}
         clusters = derive_event_clusters(bundle)
         event_sets = {tuple(row["event_ids"]) for row in clusters}
         self.assertIn(("e1", "e2"), event_sets)
