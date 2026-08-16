@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .utils import canonical_url, norm_text
@@ -13,9 +15,22 @@ DEFAULT_MONITOR_URL = "https://raw.githubusercontent.com/smoralesm07-source/Moni
 def load_monitor(source: str | Path) -> dict[str, Any]:
     source = str(source)
     if source.startswith(("http://", "https://")):
-        req = Request(source, headers={"User-Agent": "RadarPrensa/0.3.1 (+OSINT research)"})
-        with urlopen(req, timeout=45) as response:
-            return json.loads(response.read().decode("utf-8"))
+        req = Request(source, headers={"User-Agent": "RadarPrensa/0.4.1 (+OSINT research)"})
+        last_error: Exception | None = None
+        for attempt in range(1, 4):
+            try:
+                with urlopen(req, timeout=60) as response:
+                    return json.loads(response.read().decode("utf-8"))
+            except HTTPError as exc:
+                # Errores permanentes del origen no se ocultan con reintentos.
+                if 400 <= exc.code < 500 and exc.code != 429:
+                    raise
+                last_error = exc
+            except (TimeoutError, URLError, OSError) as exc:
+                last_error = exc
+            if attempt < 3:
+                time.sleep(2 ** (attempt - 1))
+        raise RuntimeError(f"MONITOR_DOWNLOAD_FAILED_AFTER_RETRIES:{source}") from last_error
     return json.loads(Path(source).read_text(encoding="utf-8"))
 
 

@@ -266,7 +266,7 @@ class RadarPrensaTests(unittest.TestCase):
             source.write_text(json.dumps(longitudinal_payload()), encoding="utf-8")
             out = root / "exports"
             manifest = run(str(source), str(out))
-            self.assertEqual(manifest["version"], "0.4.0")
+            self.assertEqual(manifest["version"], "0.4.1")
             self.assertEqual(manifest["counts"]["events"], 6)
             self.assertEqual(manifest["quality"]["geography_catalog"]["communes"], 346)
             self.assertGreaterEqual(manifest["counts"]["longitudinal_signals"], 3)

@@ -41,11 +41,15 @@ def valid_chilean_rut(value: Any) -> bool:
     return observed == expected
 
 
-def global_rut_entity_id(value: Any) -> str:
+def canonical_rut(value: Any) -> str:
     rut = normalize_rut(value)
     if not rut or not valid_chilean_rut(rut):
-        raise ValueError("GLOBAL_RUT_ENTITY_ID_REQUIRES_VALID_CHILEAN_RUT")
-    return f"ENT-RUT-{rut}"
+        raise ValueError("CANONICAL_RUT_REQUIRES_VALID_CHILEAN_RUT")
+    return f"{rut[:-1]}-{rut[-1]}"
+
+
+def global_rut_entity_id(value: Any) -> str:
+    return f"ENT-RUT-{canonical_rut(value)}"
 
 
 def _reference_index(rows: Iterable[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
@@ -68,7 +72,7 @@ def _load_sii_reference(path: Path, candidate_names: set[str]) -> dict[str, list
         return {}
     try:
         import duckdb  # type: ignore
-    except Exception as exc:  # pragma: no cover - exercised in production workflow
+    except Exception as exc:  # pragma: no cover
         raise RuntimeError("DUCKDB_REQUIRED_FOR_SII_IDENTITY_ENRICHMENT") from exc
 
     db = duckdb.connect()
@@ -129,6 +133,18 @@ def _dedupe_reference_matches(rows: list[dict[str, Any]]) -> tuple[str, dict[str
     return "RESOLVED", next(iter(by_rut.values())), 1
 
 
+def _canonical_id_from_reference(match: dict[str, Any], rut: str) -> str:
+    expected = global_rut_entity_id(rut)
+    reference_id = str(match.get("entity_id") or "").strip()
+    if not reference_id:
+        return expected
+    if reference_id != expected:
+        raise ValueError(
+            f"SII_REFERENCE_ENTITY_KEY_MISMATCH:{reference_id}:expected:{expected}"
+        )
+    return reference_id
+
+
 def _apply_reference_index(
     bundle: dict[str, list[dict[str, Any]]],
     reference: dict[str, list[dict[str, Any]]],
@@ -148,9 +164,10 @@ def _apply_reference_index(
                 canonical_id = global_rut_entity_id(existing_rut)
                 remap[before_id] = canonical_id
                 entity["entity_id"] = canonical_id
-                entity["rut_normalized"] = existing_rut
+                entity["rut_normalized"] = canonical_rut(existing_rut)
                 entity["identity_method"] = "RUT_EXACT"
                 entity["identity_confidence"] = 1.0
+                entity.setdefault("attributes", {})["global_entity_key"] = canonical_id
             else:
                 invalid_existing += 1
                 entity["rut_normalized"] = None
@@ -169,12 +186,14 @@ def _apply_reference_index(
         if status == "RESOLVED" and match is not None:
             rut = normalize_rut(match.get("rut"))
             assert rut is not None
-            canonical_id = global_rut_entity_id(rut)
+            canonical_id = _canonical_id_from_reference(match, rut)
+            formatted_rut = canonical_rut(rut)
             entity["entity_id"] = canonical_id
-            entity["rut_normalized"] = rut
+            entity["rut_normalized"] = formatted_rut
             entity["identity_method"] = "RUT_EXACT"
             entity["identity_confidence"] = 1.0
             attrs = entity.setdefault("attributes", {})
+            attrs["global_entity_key"] = canonical_id
             attrs["identity_resolution"] = {
                 "method": METHOD,
                 "reference_radar_id": SII_RADAR_ID,
@@ -189,7 +208,7 @@ def _apply_reference_index(
             }
             remap[before_id] = canonical_id
             resolved += 1
-            resolution_rut = rut
+            resolution_rut = formatted_rut
         else:
             resolution_rut = None
             ambiguous += int(status == "AMBIGUOUS")
@@ -214,7 +233,6 @@ def _apply_reference_index(
             "guardrail": GUARDRAIL,
         })
 
-    # Consolidate duplicate press identities after exact-RUT promotion.
     merged: dict[str, dict[str, Any]] = {}
     for entity in entities:
         eid = str(entity.get("entity_id") or "")
@@ -240,6 +258,7 @@ def _apply_reference_index(
             current["rut_normalized"] = entity.get("rut_normalized")
             if (entity.get("attributes") or {}).get("identity_resolution"):
                 current.setdefault("attributes", {})["identity_resolution"] = entity["attributes"]["identity_resolution"]
+                current["attributes"]["global_entity_key"] = eid
 
     bundle["entities"] = sorted(merged.values(), key=lambda row: str(row.get("entity_id") or ""))
 
@@ -284,7 +303,7 @@ def _apply_reference_index(
         "reference_radar_id": SII_RADAR_ID,
         "reference_release_tag": meta.get("release_tag") or "fusion-v1",
         "reference_asset_digest": meta.get("asset_digest") or meta.get("digest"),
-        "global_entity_key_policy": "ENT-RUT-{RUT_NORMALIZADO}",
+        "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
         "attempted": attempted,
         "resolved": resolved,
         "ambiguous": ambiguous,
@@ -313,7 +332,7 @@ def enrich_bundle_with_sii(
         return {
             "status": "NOT_RUN_NO_REFERENCE",
             "method": METHOD,
-            "global_entity_key_policy": "ENT-RUT-{RUT_NORMALIZADO}",
+            "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
             "attempted": 0,
             "resolved": 0,
             "ambiguous": 0,

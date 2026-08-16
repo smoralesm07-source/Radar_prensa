@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .identity_enrichment import global_rut_entity_id, normalize_rut, valid_chilean_rut
+from .identity_enrichment import canonical_rut, global_rut_entity_id, normalize_rut, valid_chilean_rut
 from .utils import norm_text, stable_id
 
 LEGAL_SUFFIX = re.compile(r"\b(spa|s\.a\.?|ltda\.?|eirl|e\.i\.r\.l\.?|fundacion|corporacion|asociacion|agf)\b", re.I)
@@ -35,7 +35,7 @@ def _validated_rut(value: Any) -> tuple[str | None, str | None]:
     if not normalized:
         return None, None
     if valid_chilean_rut(normalized):
-        return normalized, None
+        return canonical_rut(normalized), None
     return None, normalized
 
 
