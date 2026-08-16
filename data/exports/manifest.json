@@ -1,26 +1,26 @@
 {
   "producer_id": "radar_prensa",
-  "version": "0.3.0",
-  "generated_at": "2026-08-16T16:10:10.581012Z",
+  "version": "0.3.1",
+  "generated_at": "2026-08-16T16:25:18.519222Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 369,
-    "events": 369,
-    "evidence": 369,
+    "documents": 363,
+    "events": 363,
+    "evidence": 363,
     "entities": 2233,
     "territories": 76,
-    "entity_mentions": 5826,
-    "event_entities": 5826,
-    "event_territories": 538,
+    "entity_mentions": 5775,
+    "event_entities": 5775,
+    "event_territories": 521,
     "relationships": 342,
     "sectors": 9,
-    "temporal_assertions": 112,
+    "temporal_assertions": 110,
     "entity_activity": 2233,
     "phenomenon_windows": 32,
-    "territorial_windows": 327,
-    "event_clusters": 1,
-    "signals": 492,
-    "longitudinal_signals": 125
+    "territorial_windows": 308,
+    "event_clusters": 184,
+    "signals": 575,
+    "longitudinal_signals": 228
   },
   "quality": {
     "geography_catalog": {
@@ -28,16 +28,16 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 180,
-    "territorial_coverage_pct": 48.78,
-    "events_with_occurrence_time": 112,
-    "occurrence_time_coverage_pct": 30.35,
+    "events_with_territory": 176,
+    "territorial_coverage_pct": 48.48,
+    "events_with_occurrence_time": 110,
+    "occurrence_time_coverage_pct": 30.3,
     "temporal_precision": {
       "EXACT": 21,
       "HALF_YEAR": 1,
-      "INFERRED_DAY": 15,
-      "MONTH": 34,
-      "UNKNOWN": 257,
+      "INFERRED_DAY": 14,
+      "MONTH": 33,
+      "UNKNOWN": 253,
       "YEAR": 36,
       "YEAR_RANGE": 5
     },
@@ -55,36 +55,42 @@
         "baseline_quality": "PARTIAL"
       },
       "entity_activity_profiles": 2233,
-      "recurrent_entities": 225,
+      "recurrent_entities": 224,
       "phenomenon_windows": 32,
-      "territorial_windows": 327,
-      "event_clusters": 1,
-      "longitudinal_signal_count": 125,
+      "territorial_windows": 308,
+      "event_clusters": 184,
+      "longitudinal_signal_count": 228,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 1,
+        "CROSS_SOURCE_EVENT_CLUSTER": 110,
         "ENTITY_RECURRENCE": 83,
-        "PHENOMENON_MOMENTUM": 3,
-        "TERRITORIAL_MOMENTUM": 38
+        "PHENOMENON_MOMENTUM": 2,
+        "TERRITORIAL_MOMENTUM": 33
       }
     }
   },
   "analysis": {
     "longitudinal_policy": {
-      "version": "1.0",
+      "version": "1.1",
       "time_basis": "PUBLICATION_DATE",
       "recent_days": 7,
       "baseline_days": 28,
       "minimum_baseline_days": 14,
       "minimum_baseline_days_for_new_activity": 21,
+      "phenomenon_signal_taxonomy": "RADAR_PRENSA_PHENOMENA_ALLOWLIST",
       "entity_recurrence": {
         "minimum_events": 4,
         "minimum_distinct_dates": 3,
         "minimum_distinct_sources": 2
       },
       "event_cluster": {
+        "method": "STABLE_ENTITY_ANCHOR",
         "maximum_publication_gap_days": 21,
+        "minimum_anchor_confidence": 0.75,
+        "maximum_anchor_dataset_share": 0.1,
+        "maximum_cluster_dataset_share": 0.15,
         "signal_minimum_events": 3,
-        "signal_minimum_sources": 2
+        "signal_minimum_sources": 2,
+        "transitive_bridging": false
       },
       "guardrail": "Las métricas longitudinales describen recurrencia, concentración y cambio de cobertura periodística; no estiman probabilidad de delito ni riesgo LA/FT."
     },
