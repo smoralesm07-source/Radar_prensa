@@ -5,13 +5,15 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
+from .utils import canonical_url, norm_text
+
 DEFAULT_MONITOR_URL = "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json"
 
 
 def load_monitor(source: str | Path) -> dict[str, Any]:
     source = str(source)
     if source.startswith(("http://", "https://")):
-        req = Request(source, headers={"User-Agent": "RadarPrensa/0.2 (+OSINT research)"})
+        req = Request(source, headers={"User-Agent": "RadarPrensa/0.3.1 (+OSINT research)"})
         with urlopen(req, timeout=45) as response:
             return json.loads(response.read().decode("utf-8"))
     return json.loads(Path(source).read_text(encoding="utf-8"))
@@ -23,6 +25,41 @@ def _looks_like_record(item: Any) -> bool:
     has_url = bool(item.get("link") or item.get("url") or item.get("source_url"))
     has_title = bool(item.get("titulo") or item.get("title") or item.get("tema"))
     return has_url and has_title
+
+
+def _first(item: dict[str, Any], *keys: str) -> str:
+    for key in keys:
+        value = item.get(key)
+        if value not in (None, "", []):
+            return str(value).strip()
+    return ""
+
+
+def _soft_record_key(item: dict[str, Any]) -> tuple[str, str, str, str]:
+    """Clave secundaria para aliases del mismo artículo.
+
+    No se usa para construir IDs canónicos. Sólo colapsa registros cuando URL
+    normalizada, medio, título y fecha coinciden. Esto cubre aliases como paths
+    con mayúsculas/minúsculas sin asumir globalmente que toda URL web es
+    case-insensitive.
+    """
+    url = canonical_url(_first(item, "link", "url", "source_url"))
+    source = _first(item, "medio", "source", "fuente")
+    title = _first(item, "titulo", "title", "tema")
+    published = _first(item, "fecha_iso", "fecha", "published_at", "publication_date")[:10]
+    return norm_text(url), norm_text(source), norm_text(title), published
+
+
+def _dedupe_aliases(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for item in candidates:
+        key = _soft_record_key(item)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
 
 
 def extract_records(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -53,4 +90,4 @@ def extract_records(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
     if not candidates:
         walk(payload)
-    return candidates
+    return _dedupe_aliases(candidates)
