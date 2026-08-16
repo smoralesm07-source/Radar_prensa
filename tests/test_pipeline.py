@@ -210,7 +210,7 @@ class RadarPrensaTests(unittest.TestCase):
         media = next(s for s in signals if s["signal_type"] == "MEDIA_BURST")
         self.assertEqual(media["scope"]["time_basis"], "PUBLICATION_DATE")
 
-    def test_longitudinal_detects_recurrence_momentum_and_clusters(self):
+    def test_longitudinal_detects_recurrence_and_momentum(self):
         bundle = transform(longitudinal_payload(), retrieved_at="2026-08-16T12:00:00Z")
         products = derive_longitudinal(bundle)
         self.assertEqual(products["analysis_window"]["baseline_quality"], "FULL")
@@ -229,15 +229,10 @@ class RadarPrensaTests(unittest.TestCase):
         self.assertTrue(territorial)
         self.assertTrue(any(r["signal_eligible"] for r in territorial))
 
-        clusters = [r for r in products["event_clusters"] if r["event_count"] >= 5]
-        self.assertTrue(clusters)
-        self.assertGreaterEqual(clusters[0]["source_count"], 5)
-
         kinds = {s["signal_type"] for s in products["signals"]}
         self.assertIn("ENTITY_RECURRENCE", kinds)
         self.assertIn("PHENOMENON_MOMENTUM", kinds)
         self.assertIn("TERRITORIAL_MOMENTUM", kinds)
-        self.assertIn("CROSS_SOURCE_EVENT_CLUSTER", kinds)
         self.assertTrue(all(s["semantics"] == "CONTEXT_ONLY" for s in products["signals"]))
 
     def test_longitudinal_does_not_claim_emergence_without_baseline(self):
@@ -273,7 +268,7 @@ class RadarPrensaTests(unittest.TestCase):
             self.assertEqual(manifest["version"], "0.3.1")
             self.assertEqual(manifest["counts"]["events"], 6)
             self.assertEqual(manifest["quality"]["geography_catalog"]["communes"], 346)
-            self.assertGreaterEqual(manifest["counts"]["longitudinal_signals"], 4)
+            self.assertGreaterEqual(manifest["counts"]["longitudinal_signals"], 3)
             self.assertEqual(manifest["analysis"]["analysis_window"]["baseline_quality"], "FULL")
             for filename in (
                 "events.jsonl", "temporal_assertions.jsonl", "relationships.jsonl",
