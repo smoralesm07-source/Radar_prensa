@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .identity_enrichment import normalize_rut, valid_chilean_rut
+from .identity_enrichment import global_rut_entity_id, normalize_rut, valid_chilean_rut
 from .utils import norm_text, stable_id
 
 LEGAL_SUFFIX = re.compile(r"\b(spa|s\.a\.?|ltda\.?|eirl|e\.i\.r\.l\.?|fundacion|corporacion|asociacion|agf)\b", re.I)
@@ -67,7 +67,7 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
         if not name:
             continue
         entity_type = _map_type(raw_type, name, nature)
-        entity_id = stable_id("entity:press", rut or name)
+        entity_id = global_rut_entity_id(rut) if rut else stable_id("entity:press", name)
         if entity_id in seen:
             continue
         seen.add(entity_id)
@@ -77,6 +77,8 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
             "upstream_nature": nature,
             "requires_validation": bool(item.get("requiere_validacion")) if isinstance(item, dict) else False,
         }
+        if rut:
+            attributes["global_entity_key"] = entity_id
         if invalid_rut:
             attributes["invalid_rut_rejected"] = invalid_rut
             attributes["requires_validation"] = True
@@ -95,10 +97,10 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
         })
     text = " ".join(str(record.get(k) or "") for k in ("titulo", "title", "tema", "resumen", "texto", "contenido"))
     for raw_rut in RUT.findall(text):
-        rut, invalid_rut = _validated_rut(raw_rut)
+        rut, _ = _validated_rut(raw_rut)
         if not rut:
             continue
-        entity_id = stable_id("entity:press", rut)
+        entity_id = global_rut_entity_id(rut)
         if entity_id in seen:
             continue
         seen.add(entity_id)
@@ -113,7 +115,11 @@ def extract_entities(record: dict[str, Any], evidence_id: str) -> list[dict[str,
             "evidence_ids": [evidence_id],
             "identity_method": "RUT_EXACT",
             "identity_confidence": 1.0,
-            "attributes": {"origin": "explicit_valid_rut_regex", "upstream_entity_id": None},
+            "attributes": {
+                "origin": "explicit_valid_rut_regex",
+                "upstream_entity_id": None,
+                "global_entity_key": entity_id,
+            },
         })
     return out
 
