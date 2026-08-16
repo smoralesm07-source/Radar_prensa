@@ -11,7 +11,7 @@ DEFAULT_MONITOR_URL = "https://raw.githubusercontent.com/smoralesm07-source/Moni
 def load_monitor(source: str | Path) -> dict[str, Any]:
     source = str(source)
     if source.startswith(("http://", "https://")):
-        req = Request(source, headers={"User-Agent": "RadarPrensa/0.1 (+OSINT research)"})
+        req = Request(source, headers={"User-Agent": "RadarPrensa/0.2 (+OSINT research)"})
         with urlopen(req, timeout=45) as response:
             return json.loads(response.read().decode("utf-8"))
     return json.loads(Path(source).read_text(encoding="utf-8"))
