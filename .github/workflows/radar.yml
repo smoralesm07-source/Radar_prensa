@@ -40,7 +40,6 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-          cache: pip
 
       - name: Tests sin dependencias externas
         run: PYTHONPATH=src python -m unittest discover -s tests -v
@@ -48,7 +47,7 @@ jobs:
       - name: Construir snapshot interoperable
         run: PYTHONPATH=src python -m radar_prensa.cli --source "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json" --output data/exports
 
-      - name: Validar productos v0.2
+      - name: Validar productos v0.2.1
         shell: bash
         run: |
           set -euo pipefail
@@ -62,7 +61,7 @@ jobs:
           m=json.loads(Path('data/exports/manifest.json').read_text())
           print(json.dumps(m, indent=2, ensure_ascii=False))
           assert m['producer_id']=='radar_prensa'
-          assert m['version']=='0.2.0'
+          assert m['version']=='0.2.1'
           assert m['counts']['documents'] == m['counts']['events']
           assert m['quality']['geography_catalog'] == {'regions': 16, 'provinces': 56, 'communes': 346}
           assert 'occurrence_time_coverage_pct' in m['quality']
