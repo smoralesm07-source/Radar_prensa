@@ -31,7 +31,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -41,23 +41,103 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Tests sin dependencias externas
+      - name: Dependencia opcional de resolución SII
+        run: python -m pip install 'duckdb>=1.3,<2'
+
+      - name: Tests sin red
         run: PYTHONPATH=src python -m unittest discover -s tests -v
+
+      - name: Resolver versión gobernada de Radar SII
+        id: sii_ref
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          meta=$(gh api repos/smoralesm07-source/Radar_SII/releases/tags/fusion-v1)
+          asset_id=$(jq -r '.assets[] | select(.name=="radar-sii-fusion-profile.zip") | .id' <<<"$meta")
+          asset_updated=$(jq -r '.assets[] | select(.name=="radar-sii-fusion-profile.zip") | .updated_at' <<<"$meta")
+          asset_digest=$(jq -r '.assets[] | select(.name=="radar-sii-fusion-profile.zip") | .digest' <<<"$meta")
+          test -n "$asset_id" && test "$asset_id" != "null"
+          test -n "$asset_digest" && test "$asset_digest" != "null"
+          cache_key=$(printf '%s' "${asset_id}|${asset_updated}|${asset_digest}" | sha256sum | awk '{print $1}')
+          echo "asset_id=$asset_id" >> "$GITHUB_OUTPUT"
+          echo "asset_digest=$asset_digest" >> "$GITHUB_OUTPUT"
+          echo "cache_key=$cache_key" >> "$GITHUB_OUTPUT"
+
+      - name: Restaurar perfil SII desde cache
+        id: sii_cache
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/cache@v4
+        with:
+          path: .cache/radar_sii
+          key: radar-prensa-sii-${{ steps.sii_ref.outputs.cache_key }}
+
+      - name: Descargar perfil SII cuando cambie el release
+        if: ${{ github.event_name != 'pull_request' && steps.sii_cache.outputs.cache-hit != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/radar_sii
+          gh release download fusion-v1 \
+            --repo smoralesm07-source/Radar_SII \
+            --pattern radar-sii-fusion-profile.zip \
+            --dir .cache/radar_sii \
+            --clobber
+          unzip -jo .cache/radar_sii/radar-sii-fusion-profile.zip \
+            entity_search.parquet public_transport_manifest.json \
+            -d .cache/radar_sii
+          test -s .cache/radar_sii/entity_search.parquet
+
+      - name: Activar referencia de identidad SII
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          SII_ASSET_DIGEST: ${{ steps.sii_ref.outputs.asset_digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .cache/radar_sii/entity_search.parquet
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          transport = Path('.cache/radar_sii/public_transport_manifest.json')
+          upstream = json.loads(transport.read_text(encoding='utf-8')) if transport.exists() else {}
+          meta = {
+              'release_tag': 'fusion-v1',
+              'asset_digest': os.environ['SII_ASSET_DIGEST'],
+              'reference_radar_id': 'RADAR_SII',
+              'reference_dataset': 'entity_search.parquet',
+              'source_run_id': upstream.get('source_run_id'),
+              'profile_semantics': upstream.get('profile_semantics'),
+          }
+          Path('.cache/radar_sii/radar_prensa_sii_reference_meta.json').write_text(
+              json.dumps(meta, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          PY
+          echo "RADAR_PRENSA_SII_ENTITY_SEARCH=$GITHUB_WORKSPACE/.cache/radar_sii/entity_search.parquet" >> "$GITHUB_ENV"
+          echo "RADAR_PRENSA_SII_REFERENCE_META=$GITHUB_WORKSPACE/.cache/radar_sii/radar_prensa_sii_reference_meta.json" >> "$GITHUB_ENV"
 
       - name: Construir snapshot interoperable
         run: PYTHONPATH=src python -m radar_prensa.cli --source "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json" --output data/exports
 
-      - name: Validar productos v0.3.1
+      - name: Validar productos v0.4.0
+        env:
+          EXPECT_SII_IDENTITY: ${{ github.event_name != 'pull_request' }}
         shell: bash
         run: |
           set -euo pipefail
-          for f in documents events evidence entities territories entity_mentions event_entities event_territories relationships sectors temporal_assertions entity_activity phenomenon_windows territorial_windows event_clusters signals; do
+          for f in documents events evidence entities territories entity_mentions event_entities event_territories relationships sectors temporal_assertions identity_resolutions entity_activity phenomenon_windows territorial_windows event_clusters signals; do
             test -f "data/exports/${f}.jsonl"
           done
           test -s data/exports/manifest.json
-          python - <<'PY'
+          PYTHONPATH=src python - <<'PY'
           import json
+          import os
           from pathlib import Path
+          from radar_prensa.identity_enrichment import valid_chilean_rut
 
           def rows(name):
               p=Path(f'data/exports/{name}.jsonl')
@@ -66,8 +146,10 @@ jobs:
           m=json.loads(Path('data/exports/manifest.json').read_text())
           documents=rows('documents')
           events=rows('events')
+          entities=rows('entities')
           clusters=rows('event_clusters')
           signals=rows('signals')
+          resolutions=rows('identity_resolutions')
           print(json.dumps(m, indent=2, ensure_ascii=False))
 
           top_clusters=[]
@@ -95,17 +177,29 @@ jobs:
           print('LONGITUDINAL_DIAGNOSTIC='+json.dumps({
               'top_clusters': top_clusters,
               'phenomenon_signals': phenomenon_signals,
+              'identity_resolution_sample': resolutions[:10],
           }, ensure_ascii=False))
 
           assert m['producer_id']=='radar_prensa'
-          assert m['version']=='0.3.1'
+          assert m['version']=='0.4.0'
           assert m['counts']['documents'] == m['counts']['events']
+          assert m['counts']['identity_resolutions'] == len(resolutions)
           assert len({r['document_id'] for r in documents}) == len(documents), 'document_id duplicado'
           assert len({r['event_id'] for r in events}) == len(events), 'event_id duplicado'
           assert m['quality']['geography_catalog'] == {'regions': 16, 'provinces': 56, 'communes': 346}
           assert 'occurrence_time_coverage_pct' in m['quality']
           assert 'territorial_coverage_pct' in m['quality']
           assert 'longitudinal' in m['quality']
+          assert 'identity_enrichment' in m['quality']
+          identity=m['identity_enrichment']
+          expected=os.environ.get('EXPECT_SII_IDENTITY','false').lower()=='true'
+          assert identity['status'] == ('ACTIVE' if expected else 'NOT_RUN_NO_REFERENCE')
+          if expected:
+              assert identity.get('reference_asset_digest','').startswith('sha256:')
+          for entity in entities:
+              if entity.get('identity_method') == 'RUT_EXACT':
+                  assert valid_chilean_rut(entity.get('rut_normalized')), entity
+
           policy=m['analysis']['longitudinal_policy']
           assert policy['time_basis'] == 'PUBLICATION_DATE'
           assert policy['version'] == '1.1'
