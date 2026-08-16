@@ -6,6 +6,7 @@ from pathlib import Path
 
 from radar_prensa.entities import extract_entities
 from radar_prensa.identity_enrichment import (
+    canonical_rut,
     enrich_bundle_from_rows,
     enrich_bundle_with_sii,
     global_rut_entity_id,
@@ -18,9 +19,10 @@ from radar_prensa.utils import stable_id
 class IdentityEnrichmentTests(unittest.TestCase):
     def test_chilean_rut_validation(self):
         self.assertEqual(normalize_rut("76.123.456-0"), "761234560")
+        self.assertEqual(canonical_rut("76.123.456-0"), "76123456-0")
         self.assertTrue(valid_chilean_rut("76.123.456-0"))
         self.assertFalse(valid_chilean_rut("76.123.456-7"))
-        self.assertEqual(global_rut_entity_id("76.123.456-0"), "ENT-RUT-761234560")
+        self.assertEqual(global_rut_entity_id("76.123.456-0"), "ENT-RUT-76123456-0")
 
     def test_invalid_upstream_rut_is_not_exact_identity(self):
         rows = extract_entities(
@@ -57,12 +59,13 @@ class IdentityEnrichmentTests(unittest.TestCase):
             },
             "EVD-1",
         )
-        self.assertEqual(rows[0]["entity_id"], "ENT-RUT-761234560")
+        self.assertEqual(rows[0]["entity_id"], "ENT-RUT-76123456-0")
+        self.assertEqual(rows[0]["rut_normalized"], "76123456-0")
         self.assertEqual(rows[0]["identity_method"], "RUT_EXACT")
 
     def test_unique_official_name_match_promotes_and_remaps_identity(self):
         name_id = stable_id("entity:press", "Importadora Norte SpA")
-        rut_id = "ENT-RUT-761234560"
+        rut_id = "ENT-RUT-76123456-0"
         person_id = stable_id("entity:press", "Persona Uno")
         bundle = {
             "entities": [
@@ -83,7 +86,7 @@ class IdentityEnrichmentTests(unittest.TestCase):
                     "entity_id": rut_id,
                     "entity_type": "UNKNOWN",
                     "canonical_name": None,
-                    "rut_normalized": "761234560",
+                    "rut_normalized": "76123456-0",
                     "aliases": [],
                     "roles": ["PRESS_MENTION"],
                     "producer_ids": ["radar_prensa"],
@@ -130,8 +133,8 @@ class IdentityEnrichmentTests(unittest.TestCase):
             bundle,
             [
                 {
-                    "entity_id": "ENT-RUT-761234560",
-                    "rut": "761234560",
+                    "entity_id": "ENT-RUT-76123456-0",
+                    "rut": "76123456-0",
                     "legal_name": "IMPORTADORA NORTE SPA",
                 }
             ],
@@ -140,8 +143,8 @@ class IdentityEnrichmentTests(unittest.TestCase):
 
         self.assertEqual(stats["resolved"], 1)
         self.assertEqual(stats["ambiguous"], 0)
-        self.assertEqual(stats["global_entity_key_policy"], "ENT-RUT-{RUT_NORMALIZADO}")
-        resolved = next(row for row in bundle["entities"] if row.get("rut_normalized") == "761234560")
+        self.assertEqual(stats["global_entity_key_policy"], "ENT-RUT-{RUT_CANONICO_CON_GUION}")
+        resolved = next(row for row in bundle["entities"] if row.get("rut_normalized") == "76123456-0")
         self.assertEqual(resolved["entity_id"], rut_id)
         self.assertEqual(resolved["identity_method"], "RUT_EXACT")
         self.assertEqual(resolved["canonical_name"], "Importadora Norte SpA")
@@ -152,6 +155,7 @@ class IdentityEnrichmentTests(unittest.TestCase):
         resolution = bundle["identity_resolutions"][0]
         self.assertEqual(resolution["status"], "RESOLVED")
         self.assertEqual(resolution["global_entity_key"], rut_id)
+        self.assertEqual(resolution["rut_normalized"], "76123456-0")
         self.assertEqual(resolution["reference_asset_digest"], "sha256:test")
 
     def test_duckdb_parquet_path_matches_production_shape(self):
@@ -185,7 +189,7 @@ class IdentityEnrichmentTests(unittest.TestCase):
             try:
                 target = str(parquet).replace("'", "''")
                 con.execute(
-                    f"COPY (SELECT 'ENT-RUT-761234560' AS entity_id, '761234560' AS rut, "
+                    f"COPY (SELECT 'ENT-RUT-76123456-0' AS entity_id, '76123456-0' AS rut, "
                     f"'IMPORTADORA NORTE SPA' AS legal_name) TO '{target}' (FORMAT PARQUET)"
                 )
             finally:
@@ -195,7 +199,8 @@ class IdentityEnrichmentTests(unittest.TestCase):
 
         self.assertEqual(stats["status"], "ACTIVE")
         self.assertEqual(stats["resolved"], 1)
-        self.assertEqual(bundle["entities"][0]["entity_id"], "ENT-RUT-761234560")
+        self.assertEqual(bundle["entities"][0]["entity_id"], "ENT-RUT-76123456-0")
+        self.assertEqual(bundle["entities"][0]["rut_normalized"], "76123456-0")
         self.assertEqual(bundle["identity_resolutions"][0]["status"], "RESOLVED")
 
     def test_ambiguous_official_name_does_not_promote(self):
@@ -224,8 +229,8 @@ class IdentityEnrichmentTests(unittest.TestCase):
         stats = enrich_bundle_from_rows(
             bundle,
             [
-                {"entity_id": "ENT-RUT-761234560", "rut": "761234560", "legal_name": "Servicios del Norte SpA"},
-                {"entity_id": "ENT-RUT-765432103", "rut": "765432103", "legal_name": "SERVICIOS DEL NORTE SPA"},
+                {"entity_id": "ENT-RUT-76123456-0", "rut": "76123456-0", "legal_name": "Servicios del Norte SpA"},
+                {"entity_id": "ENT-RUT-76543210-3", "rut": "76543210-3", "legal_name": "SERVICIOS DEL NORTE SPA"},
             ],
         )
         self.assertEqual(stats["resolved"], 0)
