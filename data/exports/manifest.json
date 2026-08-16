@@ -1,20 +1,41 @@
 {
   "producer_id": "radar_prensa",
-  "version": "0.1.0",
-  "generated_at": "2026-08-16T15:02:34.230062Z",
+  "version": "0.2.0",
+  "generated_at": "2026-08-16T15:17:22.115018Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 369,
     "events": 369,
     "evidence": 369,
     "entities": 2233,
-    "territories": 16,
+    "territories": 110,
     "entity_mentions": 5822,
     "event_entities": 5822,
-    "event_territories": 55,
+    "event_territories": 777,
     "relationships": 342,
     "sectors": 9,
-    "signals": 136
+    "temporal_assertions": 112,
+    "signals": 468
+  },
+  "quality": {
+    "geography_catalog": {
+      "regions": 16,
+      "provinces": 56,
+      "communes": 346
+    },
+    "events_with_territory": 201,
+    "territorial_coverage_pct": 54.47,
+    "events_with_occurrence_time": 112,
+    "occurrence_time_coverage_pct": 30.35,
+    "temporal_precision": {
+      "EXACT": 21,
+      "HALF_YEAR": 1,
+      "INFERRED_DAY": 15,
+      "MONTH": 34,
+      "UNKNOWN": 257,
+      "YEAR": 36,
+      "YEAR_RANGE": 5
+    }
   },
   "contracts": {
     "events": "Intelligence_Fusion_Layer/schemas/event.schema.json",
@@ -24,7 +45,9 @@
   "guardrails": [
     "Prensa es contexto y evidencia secundaria; no acredita hechos por sí sola.",
     "Fecha de publicación no se usa automáticamente como fecha de ocurrencia.",
+    "Las inferencias temporales desde texto conservan regla, evidencia, precisión y confianza.",
     "Mención, coaparición o proximidad territorial no propaga riesgo AML.",
+    "La jerarquía comuna/provincia→región es contexto geográfico, no relación entre entidades.",
     "Las señales de Radar Prensa son CONTEXT_ONLY y no son probabilidad de delito o LA/FT."
   ]
 }
