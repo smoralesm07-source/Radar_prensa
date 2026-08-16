@@ -8,7 +8,7 @@ from typing import Any, Iterable
 from . import PRODUCER_ID
 from .utils import stable_id
 
-# Política determinística v0.3. No constituye scoring AML.
+# Política determinística v0.3. Estas reglas describen contexto de prensa; no son scoring AML.
 RECENT_DAYS = 7
 BASELINE_DAYS = 28
 MIN_BASELINE_DAYS = 14
@@ -95,13 +95,7 @@ def _analysis_window(events: list[dict[str, Any]]) -> dict[str, Any]:
     baseline_from = baseline_to - timedelta(days=BASELINE_DAYS - 1)
     observed_from = max(dataset_start, baseline_from)
     observed_days = (baseline_to - observed_from).days + 1 if observed_from <= baseline_to else 0
-    if observed_days >= BASELINE_DAYS:
-        quality = "FULL"
-    elif observed_days >= MIN_BASELINE_DAYS:
-        quality = "PARTIAL"
-    else:
-        quality = "INSUFFICIENT"
-
+    quality = "FULL" if observed_days >= BASELINE_DAYS else ("PARTIAL" if observed_days >= MIN_BASELINE_DAYS else "INSUFFICIENT")
     return {
         "time_basis": "PUBLICATION_DATE",
         "dataset_start": dataset_start.isoformat(),
@@ -126,7 +120,6 @@ def _window_stats(events: list[dict[str, Any]], window: dict[str, Any]) -> dict[
     baseline_to = _parse_date(window.get("baseline_to"))
     observed_from = _parse_date(window.get("baseline_observed_from"))
     observed_days = int(window.get("baseline_observed_days") or 0)
-
     if not anchor or not recent_from:
         return {
             "recent_count": 0,
@@ -169,15 +162,9 @@ def _window_stats(events: list[dict[str, Any]], window: dict[str, Any]) -> dict[
         status = "NEW_ACTIVITY" if observed_days >= MIN_BASELINE_DAYS_FOR_NEW else "PARTIAL_BASELINE_ZERO"
     else:
         threshold = max(3, math.ceil(baseline_rate * 2))
-        delta = len(recent) - baseline_rate
-        status = "ELEVATED" if len(recent) >= threshold and delta >= 2 else "STABLE"
+        status = "ELEVATED" if len(recent) >= threshold and (len(recent) - baseline_rate) >= 2 else "STABLE"
 
-    signal_eligible = (
-        status in {"NEW_ACTIVITY", "ELEVATED"}
-        and len(recent_sources) >= 2
-        and len(recent_dates) >= 2
-    )
-
+    signal_eligible = status in {"NEW_ACTIVITY", "ELEVATED"} and len(recent_sources) >= 2 and len(recent_dates) >= 2
     return {
         "recent_count": len(recent),
         "recent_source_count": len(recent_sources),
@@ -205,14 +192,16 @@ def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
     rows: list[dict[str, Any]] = []
     for entity_id, events in sorted(event_map.items()):
         entity = entities.get(entity_id, {})
-        dated = sorted((d, e) for e in events if (d := _publication_date(e)))
+        dated = sorted(
+            ((d, e) for e in events if (d := _publication_date(e))),
+            key=lambda item: (item[0], item[1].get("event_id", "")),
+        )
         publication_dates = sorted({d.isoformat() for d, _ in dated})
         source_names = sorted({_source_name(e) for e in events if _source_name(e)})
         phenomena = sorted({p for e in events for p in _phenomena(e)})
         territories = sorted({t for e in events for t in e.get("territory_ids", [])})
         evidence_ids = _event_evidence_ids(events)
         monthly = Counter(d.strftime("%Y-%m") for d, _ in dated)
-
         occurrence_from = sorted(
             x for e in events
             if e.get("temporal", {}).get("occurrence_date_precision") != "UNKNOWN"
@@ -223,10 +212,7 @@ def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
             if e.get("temporal", {}).get("occurrence_date_precision") != "UNKNOWN"
             if (x := e.get("temporal", {}).get("occurrence_date_to"))
         )
-        known_occurrence_count = sum(
-            1 for e in events if e.get("temporal", {}).get("occurrence_date_precision") != "UNKNOWN"
-        )
-
+        known_occurrence_count = sum(1 for e in events if e.get("temporal", {}).get("occurrence_date_precision") != "UNKNOWN")
         recurrent = (
             len(events) >= RECURRENT_ENTITY_MIN_EVENTS
             and len(publication_dates) >= RECURRENT_ENTITY_MIN_DATES
@@ -237,7 +223,6 @@ def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
         last_seen = publication_dates[-1] if publication_dates else None
         first_date = _parse_date(first_seen)
         last_date = _parse_date(last_seen)
-
         rows.append({
             "entity_activity_id": stable_id("entity-activity:press", entity_id),
             "producer_id": PRODUCER_ID,
@@ -264,10 +249,7 @@ def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
             "first_known_occurrence_from": occurrence_from[0] if occurrence_from else None,
             "last_known_occurrence_to": occurrence_to[-1] if occurrence_to else None,
             "recurrence_status": status,
-            "recurrence_rule": (
-                f">={RECURRENT_ENTITY_MIN_EVENTS} eventos, >={RECURRENT_ENTITY_MIN_DATES} fechas y "
-                f">={RECURRENT_ENTITY_MIN_SOURCES} fuentes"
-            ),
+            "recurrence_rule": f">={RECURRENT_ENTITY_MIN_EVENTS} eventos, >={RECURRENT_ENTITY_MIN_DATES} fechas y >={RECURRENT_ENTITY_MIN_SOURCES} fuentes",
             "semantics": "PRESS_RECURRENCE_CONTEXT",
             "interpretation_guardrail": "Recurrencia significa repetición de menciones/eventos de prensa; no acredita relación causal, conducta, delito ni riesgo AML.",
         })
@@ -279,10 +261,8 @@ def derive_phenomenon_windows(bundle: dict[str, list[dict[str, Any]]], window: d
     for event in bundle.get("events", []):
         for phenomenon in _phenomena(event):
             grouped[phenomenon].append(event)
-
-    rows: list[dict[str, Any]] = []
+    rows = []
     for phenomenon, events in sorted(grouped.items()):
-        stats = _window_stats(events, window)
         rows.append({
             "phenomenon_window_id": stable_id("phen-window:press", phenomenon, window.get("anchor_date")),
             "producer_id": PRODUCER_ID,
@@ -290,7 +270,7 @@ def derive_phenomenon_windows(bundle: dict[str, list[dict[str, Any]]], window: d
             "time_basis": "PUBLICATION_DATE",
             "window": dict(window),
             "stable_signal_taxonomy": _stable_signal_phenomenon(phenomenon),
-            **stats,
+            **_window_stats(events, window),
             "semantics": "LONGITUDINAL_PRESS_CONTEXT",
             "interpretation_guardrail": "El cambio refleja variación de cobertura periodística en ventanas comparables; no equivale a cambio de incidencia delictual o riesgo LA/FT.",
         })
@@ -304,13 +284,11 @@ def derive_territorial_windows(bundle: dict[str, list[dict[str, Any]]], window: 
         for territory_id in set(event.get("territory_ids", [])):
             for phenomenon in _phenomena(event):
                 grouped[(territory_id, phenomenon)].append(event)
-
-    rows: list[dict[str, Any]] = []
+    rows = []
     for (territory_id, phenomenon), events in sorted(grouped.items()):
         if len(events) < 2:
             continue
         territory = territory_lookup.get(territory_id, {})
-        stats = _window_stats(events, window)
         rows.append({
             "territorial_window_id": stable_id("territory-window:press", territory_id, phenomenon, window.get("anchor_date")),
             "producer_id": PRODUCER_ID,
@@ -321,7 +299,7 @@ def derive_territorial_windows(bundle: dict[str, list[dict[str, Any]]], window: 
             "time_basis": "PUBLICATION_DATE",
             "window": dict(window),
             "stable_signal_taxonomy": _stable_signal_phenomenon(phenomenon),
-            **stats,
+            **_window_stats(events, window),
             "semantics": "TEMPORAL_TERRITORIAL_PRESS_CONTEXT",
             "interpretation_guardrail": "La concentración territorial refleja publicaciones asociadas al territorio; no implica que el hecho haya ocurrido allí ni que el territorio tenga mayor riesgo AML.",
         })
@@ -356,16 +334,16 @@ def derive_event_clusters(bundle: dict[str, list[dict[str, Any]]]) -> list[dict[
             if _stable_signal_phenomenon(phenomenon):
                 by_phenomenon[phenomenon].append(event)
 
-    for _, group in by_phenomenon.items():
-        group = sorted(group, key=lambda e: _publication_date(e) or date.min)
-        for i, left in enumerate(group):
+    for group in by_phenomenon.values():
+        ordered = sorted(group, key=lambda e: (_publication_date(e) or date.min, e["event_id"]))
+        for i, left in enumerate(ordered):
             left_date = _publication_date(left)
             if not left_date:
                 continue
             left_entities = set(left.get("entity_ids", []))
             left_territories = set(left.get("territory_ids", []))
-            left_phen = _phenomena(left)
-            for right in group[i + 1:]:
+            left_phenomena = _phenomena(left)
+            for right in ordered[i + 1:]:
                 right_date = _publication_date(right)
                 if not right_date:
                     continue
@@ -373,17 +351,16 @@ def derive_event_clusters(bundle: dict[str, list[dict[str, Any]]]) -> list[dict[
                     break
                 shared_entities = left_entities & set(right.get("entity_ids", []))
                 shared_territories = left_territories & set(right.get("territory_ids", []))
-                shared_phenomena = left_phen & _phenomena(right)
+                shared_phenomena = left_phenomena & _phenomena(right)
                 strong_shared = {eid for eid in shared_entities if _strong_entity(eid, entity_lookup)}
-                link = bool(strong_shared) or len(shared_entities) >= 2 or (bool(shared_territories) and len(shared_phenomena) >= 2)
-                if link:
+                if strong_shared or len(shared_entities) >= 2 or (shared_territories and len(shared_phenomena) >= 2):
                     union(left["event_id"], right["event_id"])
 
     components: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for event in events:
         components[find(event["event_id"])].append(event)
 
-    rows: list[dict[str, Any]] = []
+    rows = []
     for component in components.values():
         if len(component) < 2:
             continue
@@ -401,7 +378,6 @@ def derive_event_clusters(bundle: dict[str, list[dict[str, Any]]]) -> list[dict[
             continue
         strength = "STRONG" if strong_shared and len(sources) >= 2 else ("MODERATE" if len(sources) >= 2 else "WEAK")
         event_ids = sorted(e["event_id"] for e in component)
-        evidence_ids = _event_evidence_ids(component)
         rows.append({
             "cluster_id": stable_id("cluster:press", *event_ids),
             "producer_id": PRODUCER_ID,
@@ -416,7 +392,7 @@ def derive_event_clusters(bundle: dict[str, list[dict[str, Any]]]) -> list[dict[
             "source_count": len(sources),
             "source_names": sources,
             "event_ids": event_ids,
-            "evidence_ids": evidence_ids,
+            "evidence_ids": _event_evidence_ids(component),
             "shared_entity_ids": shared_entities,
             "strong_shared_entity_ids": strong_shared,
             "shared_territory_ids": shared_territories,
@@ -440,21 +416,16 @@ def derive_longitudinal_signals(
         if row.get("recurrence_status") != "RECURRENT":
             continue
         entity_type = row.get("entity_type")
-        identity_confidence = float(row.get("identity_confidence") or 0.0)
         if entity_type not in _SIGNAL_ENTITY_TYPES and not row.get("rut_normalized"):
             continue
-        if identity_confidence < 0.70:
+        if float(row.get("identity_confidence") or 0.0) < 0.70:
             continue
         signals.append({
             "signal_id": stable_id("signal:press", "entity_recurrence", row["entity_id"], row.get("last_seen_publication")),
             "producer_id": PRODUCER_ID,
             "signal_type": "ENTITY_RECURRENCE",
-            "scope": {
-                "entity_id": row["entity_id"],
-                "canonical_name": row.get("canonical_name"),
-                "entity_type": entity_type,
-                "time_basis": "PUBLICATION_DATE",
-            },
+            "rule_version": "longitudinal-v1.0",
+            "scope": {"entity_id": row["entity_id"], "canonical_name": row.get("canonical_name"), "entity_type": entity_type, "time_basis": "PUBLICATION_DATE"},
             "value": row["event_count"],
             "threshold": RECURRENT_ENTITY_MIN_EVENTS,
             "metrics": {
@@ -479,15 +450,12 @@ def derive_longitudinal_signals(
             "signal_id": stable_id("signal:press", signal_type, row["phenomenon"], row.get("window", {}).get("anchor_date")),
             "producer_id": PRODUCER_ID,
             "signal_type": signal_type,
+            "rule_version": "longitudinal-v1.0",
             "scope": {"phenomenon": row["phenomenon"], "time_basis": "PUBLICATION_DATE"},
             "value": row["recent_count"],
             "threshold": 3,
             "window": row["window"],
-            "baseline": {
-                "count": row["baseline_count"],
-                "observed_days": row["baseline_observed_days"],
-                "weekly_rate": row["baseline_weekly_rate"],
-            },
+            "baseline": {"count": row["baseline_count"], "observed_days": row["baseline_observed_days"], "weekly_rate": row["baseline_weekly_rate"]},
             "metrics": {
                 "status": status,
                 "recent_source_count": row["recent_source_count"],
@@ -508,6 +476,7 @@ def derive_longitudinal_signals(
             "signal_id": stable_id("signal:press", "territorial_momentum", row["territory_id"], row["phenomenon"], row.get("window", {}).get("anchor_date")),
             "producer_id": PRODUCER_ID,
             "signal_type": "TERRITORIAL_MOMENTUM",
+            "rule_version": "longitudinal-v1.0",
             "scope": {
                 "territory_id": row["territory_id"],
                 "territory_name": row.get("territory_name"),
@@ -518,11 +487,7 @@ def derive_longitudinal_signals(
             "value": row["recent_count"],
             "threshold": 3,
             "window": row["window"],
-            "baseline": {
-                "count": row["baseline_count"],
-                "observed_days": row["baseline_observed_days"],
-                "weekly_rate": row["baseline_weekly_rate"],
-            },
+            "baseline": {"count": row["baseline_count"], "observed_days": row["baseline_observed_days"], "weekly_rate": row["baseline_weekly_rate"]},
             "metrics": {
                 "status": row["status"],
                 "recent_source_count": row["recent_source_count"],
@@ -543,12 +508,8 @@ def derive_longitudinal_signals(
             "signal_id": stable_id("signal:press", "cross_source_event_cluster", row["cluster_id"]),
             "producer_id": PRODUCER_ID,
             "signal_type": "CROSS_SOURCE_EVENT_CLUSTER",
-            "scope": {
-                "cluster_id": row["cluster_id"],
-                "cluster_type": row["cluster_type"],
-                "cluster_strength": row["cluster_strength"],
-                "time_basis": "PUBLICATION_DATE",
-            },
+            "rule_version": "longitudinal-v1.0",
+            "scope": {"cluster_id": row["cluster_id"], "cluster_type": row["cluster_type"], "cluster_strength": row["cluster_strength"], "time_basis": "PUBLICATION_DATE"},
             "value": row["event_count"],
             "threshold": CLUSTER_SIGNAL_MIN_EVENTS,
             "metrics": {
@@ -563,7 +524,6 @@ def derive_longitudinal_signals(
             "explanation": f"Cluster de {row['event_count']} eventos conectados observado en {row['source_count']} fuentes.",
             "interpretation_guardrail": "El cluster sugiere continuidad temática o relacional para revisión humana; no consolida automáticamente los eventos como un único caso.",
         })
-
     return sorted(signals, key=lambda r: (r["signal_type"], r["signal_id"]))
 
 
