@@ -70,6 +70,33 @@ jobs:
           signals=rows('signals')
           print(json.dumps(m, indent=2, ensure_ascii=False))
 
+          top_clusters=[]
+          for c in sorted(clusters, key=lambda r:(-r.get('event_count',0), -r.get('source_count',0), r.get('cluster_id','')))[:12]:
+              top_clusters.append({
+                  'event_count': c.get('event_count'),
+                  'dataset_share_pct': c.get('dataset_share_pct'),
+                  'source_count': c.get('source_count'),
+                  'active_publication_days': c.get('active_publication_days'),
+                  'anchor_entity_names': c.get('anchor_entity_names'),
+                  'anchor_identity_methods': c.get('anchor_identity_methods'),
+                  'recurring_phenomena': c.get('recurring_phenomena'),
+              })
+          phenomenon_signals=[
+              {
+                  'signal_type': s.get('signal_type'),
+                  'phenomenon': s.get('scope',{}).get('phenomenon'),
+                  'value': s.get('value'),
+                  'baseline': s.get('baseline'),
+                  'metrics': s.get('metrics'),
+              }
+              for s in signals
+              if s.get('signal_type') in {'PHENOMENON_MOMENTUM','PHENOMENON_EMERGENCE'}
+          ]
+          print('LONGITUDINAL_DIAGNOSTIC='+json.dumps({
+              'top_clusters': top_clusters,
+              'phenomenon_signals': phenomenon_signals,
+          }, ensure_ascii=False))
+
           assert m['producer_id']=='radar_prensa'
           assert m['version']=='0.3.1'
           assert m['counts']['documents'] == m['counts']['events']
