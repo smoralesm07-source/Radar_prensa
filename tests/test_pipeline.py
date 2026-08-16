@@ -8,6 +8,7 @@ from pathlib import Path
 from radar_prensa.geo_catalog import catalog_counts
 from radar_prensa.geography import extract_territories
 from radar_prensa.importer import extract_records
+from radar_prensa.longitudinal import derive_longitudinal
 from radar_prensa.pipeline import derive_context_signals, run, transform
 from radar_prensa.temporal import event_temporal
 
@@ -35,6 +36,77 @@ def sample_payload():
             },
             {"fecha": "2026-08-15", "medio": "Medio B", "titulo": "Fiscalía investiga contrabando en Iquique", "link": "https://example.com/b"},
             {"fecha": "2026-08-15", "medio": "Medio C", "titulo": "Nueva arista de contrabando en Iquique", "link": "https://example.com/c"},
+        ]
+    }
+
+
+def longitudinal_payload():
+    entity = {
+        "entidad_id": "ENT-RECURRENTE",
+        "nombre": "Importadora Norte SpA",
+        "tipo": "EMPRESA",
+        "naturaleza": "PERSONA_JURIDICA",
+        "rut": "76123456-7",
+        "confianza_score": 0.95,
+    }
+
+    def article(day: str, source: str, suffix: str, phenomenon: str = "contrabando", with_entity: bool = True):
+        return {
+            "fecha": day,
+            "medio": source,
+            "titulo": f"Fiscalía investiga {phenomenon} en Iquique {suffix}",
+            "tema": f"Nuevos antecedentes sobre {phenomenon} en la comuna de Iquique.",
+            "link": f"https://example.com/longitudinal/{suffix}",
+            "fenomenos": [phenomenon],
+            "lugares": [{"nombre": "Iquique", "nivel": "comuna", "confianza": 0.98}],
+            "nomina_entidades": [entity] if with_entity else [],
+            "nucleo": True,
+        }
+
+    return {
+        "prensa": [
+            {
+                "fecha": "2026-07-01",
+                "medio": "Medio Histórico",
+                "titulo": "Reporte económico sin relación con contrabando",
+                "tema": "Informe financiero general.",
+                "link": "https://example.com/longitudinal/coverage-anchor",
+                "fenomenos": ["delitos_economicos"],
+            },
+            article("2026-07-20", "Medio Base", "baseline"),
+            article("2026-08-10", "Medio A", "recent-a"),
+            article("2026-08-11", "Medio B", "recent-b"),
+            article("2026-08-14", "Medio C", "recent-c"),
+            article("2026-08-16", "Medio D", "recent-d"),
+        ]
+    }
+
+
+def recent_only_payload():
+    entity = {
+        "entidad_id": "ENT-NEW",
+        "nombre": "Sociedad Reciente SpA",
+        "tipo": "EMPRESA",
+        "naturaleza": "PERSONA_JURIDICA",
+        "confianza_score": 0.92,
+    }
+    return {
+        "prensa": [
+            {
+                "fecha": day,
+                "medio": source,
+                "titulo": f"Operativo por contrabando en Iquique {idx}",
+                "tema": "Caso de contrabando en la comuna de Iquique.",
+                "link": f"https://example.com/recent-only/{idx}",
+                "fenomenos": ["contrabando"],
+                "lugares": [{"nombre": "Iquique", "nivel": "comuna", "confianza": 0.98}],
+                "nomina_entidades": [entity],
+            }
+            for idx, (day, source) in enumerate([
+                ("2026-08-11", "Medio A"),
+                ("2026-08-13", "Medio B"),
+                ("2026-08-16", "Medio C"),
+            ], start=1)
         ]
     }
 
@@ -138,21 +210,77 @@ class RadarPrensaTests(unittest.TestCase):
         media = next(s for s in signals if s["signal_type"] == "MEDIA_BURST")
         self.assertEqual(media["scope"]["time_basis"], "PUBLICATION_DATE")
 
+    def test_longitudinal_detects_recurrence_momentum_and_clusters(self):
+        bundle = transform(longitudinal_payload(), retrieved_at="2026-08-16T12:00:00Z")
+        products = derive_longitudinal(bundle)
+        self.assertEqual(products["analysis_window"]["baseline_quality"], "FULL")
+
+        profile = next(r for r in products["entity_activity"] if r.get("canonical_name") == "Importadora Norte SpA")
+        self.assertEqual(profile["recurrence_status"], "RECURRENT")
+        self.assertGreaterEqual(profile["event_count"], 5)
+        self.assertGreaterEqual(profile["source_count"], 5)
+
+        phenomenon = next(r for r in products["phenomenon_windows"] if r["phenomenon"] == "contrabando")
+        self.assertEqual(phenomenon["status"], "ELEVATED")
+        self.assertTrue(phenomenon["signal_eligible"])
+        self.assertEqual(phenomenon["recent_count"], 4)
+
+        territorial = [r for r in products["territorial_windows"] if r["phenomenon"] == "contrabando" and r["recent_count"] >= 4]
+        self.assertTrue(territorial)
+        self.assertTrue(any(r["signal_eligible"] for r in territorial))
+
+        clusters = [r for r in products["event_clusters"] if r["event_count"] >= 5]
+        self.assertTrue(clusters)
+        self.assertGreaterEqual(clusters[0]["source_count"], 5)
+
+        kinds = {s["signal_type"] for s in products["signals"]}
+        self.assertIn("ENTITY_RECURRENCE", kinds)
+        self.assertIn("PHENOMENON_MOMENTUM", kinds)
+        self.assertIn("TERRITORIAL_MOMENTUM", kinds)
+        self.assertIn("CROSS_SOURCE_EVENT_CLUSTER", kinds)
+        self.assertTrue(all(s["semantics"] == "CONTEXT_ONLY" for s in products["signals"]))
+
+    def test_longitudinal_does_not_claim_emergence_without_baseline(self):
+        bundle = transform(recent_only_payload(), retrieved_at="2026-08-16T12:00:00Z")
+        products = derive_longitudinal(bundle)
+        self.assertEqual(products["analysis_window"]["baseline_quality"], "INSUFFICIENT")
+        phenomenon = next(r for r in products["phenomenon_windows"] if r["phenomenon"] == "contrabando")
+        self.assertEqual(phenomenon["status"], "INSUFFICIENT_BASELINE")
+        kinds = {s["signal_type"] for s in products["signals"]}
+        self.assertNotIn("PHENOMENON_EMERGENCE", kinds)
+        self.assertNotIn("PHENOMENON_MOMENTUM", kinds)
+        self.assertNotIn("TERRITORIAL_MOMENTUM", kinds)
+
+    def test_longitudinal_handles_same_day_repeated_entity(self):
+        payload = longitudinal_payload()
+        duplicate = dict(payload["prensa"][-1])
+        duplicate["medio"] = "Medio E"
+        duplicate["link"] = "https://example.com/longitudinal/recent-d-same-day"
+        payload["prensa"].append(duplicate)
+        bundle = transform(payload, retrieved_at="2026-08-16T12:00:00Z")
+        products = derive_longitudinal(bundle)
+        profile = next(r for r in products["entity_activity"] if r.get("canonical_name") == "Importadora Norte SpA")
+        self.assertGreaterEqual(profile["event_count"], 6)
+        self.assertEqual(profile["last_seen_publication"], "2026-08-16")
+
     def test_end_to_end(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             source = root / "monitor.json"
-            source.write_text(json.dumps(sample_payload()), encoding="utf-8")
+            source.write_text(json.dumps(longitudinal_payload()), encoding="utf-8")
             out = root / "exports"
             manifest = run(str(source), str(out))
-            self.assertEqual(manifest["version"], "0.2.1")
-            self.assertEqual(manifest["counts"]["events"], 3)
+            self.assertEqual(manifest["version"], "0.3.0")
+            self.assertEqual(manifest["counts"]["events"], 6)
             self.assertEqual(manifest["quality"]["geography_catalog"]["communes"], 346)
-            self.assertGreaterEqual(manifest["counts"]["temporal_assertions"], 1)
-            self.assertTrue((out / "events.jsonl").exists())
-            self.assertTrue((out / "temporal_assertions.jsonl").exists())
-            self.assertTrue((out / "relationships.jsonl").exists())
-            self.assertTrue((out / "manifest.json").exists())
+            self.assertGreaterEqual(manifest["counts"]["longitudinal_signals"], 4)
+            self.assertEqual(manifest["analysis"]["analysis_window"]["baseline_quality"], "FULL")
+            for filename in (
+                "events.jsonl", "temporal_assertions.jsonl", "relationships.jsonl",
+                "entity_activity.jsonl", "phenomenon_windows.jsonl", "territorial_windows.jsonl",
+                "event_clusters.jsonl", "signals.jsonl", "manifest.json",
+            ):
+                self.assertTrue((out / filename).exists(), filename)
 
 
 if __name__ == "__main__":
