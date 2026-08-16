@@ -1,21 +1,26 @@
 {
   "producer_id": "radar_prensa",
-  "version": "0.2.1",
-  "generated_at": "2026-08-16T15:39:52.643206Z",
+  "version": "0.3.0",
+  "generated_at": "2026-08-16T16:10:10.581012Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 369,
     "events": 369,
     "evidence": 369,
-    "entities": 2234,
+    "entities": 2233,
     "territories": 76,
-    "entity_mentions": 5836,
-    "event_entities": 5836,
+    "entity_mentions": 5826,
+    "event_entities": 5826,
     "event_territories": 538,
-    "relationships": 346,
+    "relationships": 342,
     "sectors": 9,
     "temporal_assertions": 112,
-    "signals": 367
+    "entity_activity": 2233,
+    "phenomenon_windows": 32,
+    "territorial_windows": 327,
+    "event_clusters": 1,
+    "signals": 492,
+    "longitudinal_signals": 125
   },
   "quality": {
     "geography_catalog": {
@@ -35,12 +40,72 @@
       "UNKNOWN": 257,
       "YEAR": 36,
       "YEAR_RANGE": 5
+    },
+    "longitudinal": {
+      "analysis_window": {
+        "time_basis": "PUBLICATION_DATE",
+        "dataset_start": "2026-07-21",
+        "anchor_date": "2026-08-16",
+        "recent_from": "2026-08-10",
+        "recent_to": "2026-08-16",
+        "baseline_from": "2026-07-13",
+        "baseline_to": "2026-08-09",
+        "baseline_observed_from": "2026-07-21",
+        "baseline_observed_days": 20,
+        "baseline_quality": "PARTIAL"
+      },
+      "entity_activity_profiles": 2233,
+      "recurrent_entities": 225,
+      "phenomenon_windows": 32,
+      "territorial_windows": 327,
+      "event_clusters": 1,
+      "longitudinal_signal_count": 125,
+      "longitudinal_signal_types": {
+        "CROSS_SOURCE_EVENT_CLUSTER": 1,
+        "ENTITY_RECURRENCE": 83,
+        "PHENOMENON_MOMENTUM": 3,
+        "TERRITORIAL_MOMENTUM": 38
+      }
+    }
+  },
+  "analysis": {
+    "longitudinal_policy": {
+      "version": "1.0",
+      "time_basis": "PUBLICATION_DATE",
+      "recent_days": 7,
+      "baseline_days": 28,
+      "minimum_baseline_days": 14,
+      "minimum_baseline_days_for_new_activity": 21,
+      "entity_recurrence": {
+        "minimum_events": 4,
+        "minimum_distinct_dates": 3,
+        "minimum_distinct_sources": 2
+      },
+      "event_cluster": {
+        "maximum_publication_gap_days": 21,
+        "signal_minimum_events": 3,
+        "signal_minimum_sources": 2
+      },
+      "guardrail": "Las métricas longitudinales describen recurrencia, concentración y cambio de cobertura periodística; no estiman probabilidad de delito ni riesgo LA/FT."
+    },
+    "analysis_window": {
+      "time_basis": "PUBLICATION_DATE",
+      "dataset_start": "2026-07-21",
+      "anchor_date": "2026-08-16",
+      "recent_from": "2026-08-10",
+      "recent_to": "2026-08-16",
+      "baseline_from": "2026-07-13",
+      "baseline_to": "2026-08-09",
+      "baseline_observed_from": "2026-07-21",
+      "baseline_observed_days": 20,
+      "baseline_quality": "PARTIAL"
     }
   },
   "contracts": {
     "events": "Intelligence_Fusion_Layer/schemas/event.schema.json",
     "evidence": "Intelligence_Fusion_Layer/schemas/evidence.schema.json",
-    "entities": "Intelligence_Fusion_Layer/schemas/entity.schema.json"
+    "entities": "Intelligence_Fusion_Layer/schemas/entity.schema.json",
+    "signals": "Radar_Prensa v0.3 CONTEXT_ONLY signals; adapter formal al Signals Registry pendiente de estabilización transversal."
   },
   "guardrails": [
     "Prensa es contexto y evidencia secundaria; no acredita hechos por sí sola.",
@@ -48,6 +113,9 @@
     "Las inferencias temporales desde texto conservan regla, evidencia, precisión y confianza.",
     "Mención, coaparición o proximidad territorial no propaga riesgo AML.",
     "La jerarquía comuna/provincia→región es contexto geográfico, no relación entre entidades.",
-    "Las señales de Radar Prensa son CONTEXT_ONLY y no son probabilidad de delito o LA/FT."
+    "Las señales de Radar Prensa son CONTEXT_ONLY y no son probabilidad de delito o LA/FT.",
+    "La inteligencia longitudinal usa PUBLICATION_DATE como baseline para evitar sesgos por cobertura parcial de fecha de ocurrencia.",
+    "Emergencia y momentum significan cambio de cobertura periodística respecto de un baseline; no cambio probado de incidencia delictual.",
+    "Los clusters son agrupaciones analíticas para revisión humana y no consolidan automáticamente publicaciones en un mismo caso."
   ]
 }
