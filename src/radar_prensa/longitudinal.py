@@ -6,9 +6,10 @@ from datetime import date, timedelta
 from typing import Any, Iterable
 
 from . import PRODUCER_ID
+from .taxonomy import PHENOMENA
 from .utils import stable_id
 
-# Política determinística v0.3. Estas reglas describen contexto de prensa; no son scoring AML.
+# Política determinística. Describe contexto de prensa; no constituye scoring AML.
 RECENT_DAYS = 7
 BASELINE_DAYS = 28
 MIN_BASELINE_DAYS = 14
@@ -19,27 +20,36 @@ RECURRENT_ENTITY_MIN_SOURCES = 2
 CLUSTER_MAX_GAP_DAYS = 21
 CLUSTER_SIGNAL_MIN_EVENTS = 3
 CLUSTER_SIGNAL_MIN_SOURCES = 2
+CLUSTER_ANCHOR_MAX_SHARE = 0.10
+CLUSTER_MAX_DATASET_SHARE = 0.15
+CLUSTER_ANCHOR_MIN_CONFIDENCE = 0.75
 
 _SIGNAL_ENTITY_TYPES = {"PERSON", "LEGAL_ENTITY", "OSFL"}
 
 
 def longitudinal_policy() -> dict[str, Any]:
     return {
-        "version": "1.0",
+        "version": "1.1",
         "time_basis": "PUBLICATION_DATE",
         "recent_days": RECENT_DAYS,
         "baseline_days": BASELINE_DAYS,
         "minimum_baseline_days": MIN_BASELINE_DAYS,
         "minimum_baseline_days_for_new_activity": MIN_BASELINE_DAYS_FOR_NEW,
+        "phenomenon_signal_taxonomy": "RADAR_PRENSA_PHENOMENA_ALLOWLIST",
         "entity_recurrence": {
             "minimum_events": RECURRENT_ENTITY_MIN_EVENTS,
             "minimum_distinct_dates": RECURRENT_ENTITY_MIN_DATES,
             "minimum_distinct_sources": RECURRENT_ENTITY_MIN_SOURCES,
         },
         "event_cluster": {
+            "method": "STABLE_ENTITY_ANCHOR",
             "maximum_publication_gap_days": CLUSTER_MAX_GAP_DAYS,
+            "minimum_anchor_confidence": CLUSTER_ANCHOR_MIN_CONFIDENCE,
+            "maximum_anchor_dataset_share": CLUSTER_ANCHOR_MAX_SHARE,
+            "maximum_cluster_dataset_share": CLUSTER_MAX_DATASET_SHARE,
             "signal_minimum_events": CLUSTER_SIGNAL_MIN_EVENTS,
             "signal_minimum_sources": CLUSTER_SIGNAL_MIN_SOURCES,
+            "transitive_bridging": False,
         },
         "guardrail": "Las métricas longitudinales describen recurrencia, concentración y cambio de cobertura periodística; no estiman probabilidad de delito ni riesgo LA/FT.",
     }
@@ -68,12 +78,37 @@ def _phenomena(event: dict[str, Any]) -> set[str]:
 
 
 def _stable_signal_phenomenon(value: str) -> bool:
-    code = str(value or "").strip().casefold()
-    return bool(code) and not code.startswith("din_") and code not in {"otro", "otros", "unknown"}
+    # Momentum/emergencia se reserva para la taxonomía amplia y gobernada.
+    # Etiquetas upstream/caso se conservan, pero no se promueven a fenómeno emergente.
+    return str(value or "").strip() in PHENOMENA
+
+
+def _event_key(event: dict[str, Any]) -> str:
+    return str(event.get("attributes", {}).get("document_id") or event.get("event_id") or "")
+
+
+def _unique_events(events: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for event in events:
+        key = _event_key(event)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(event)
+    return out
+
+
+def _event_ids(events: Iterable[dict[str, Any]]) -> list[str]:
+    return sorted({str(e.get("event_id")) for e in events if e.get("event_id")})
+
+
+def _event_evidence_ids(events: Iterable[dict[str, Any]]) -> list[str]:
+    return sorted({eid for event in events for eid in event.get("evidence_ids", []) if eid})
 
 
 def _analysis_window(events: list[dict[str, Any]]) -> dict[str, Any]:
-    dates = sorted(d for d in (_publication_date(e) for e in events) if d)
+    dates = sorted(d for d in (_publication_date(e) for e in _unique_events(events)) if d)
     if not dates:
         return {
             "time_basis": "PUBLICATION_DATE",
@@ -87,7 +122,6 @@ def _analysis_window(events: list[dict[str, Any]]) -> dict[str, Any]:
             "baseline_observed_days": 0,
             "baseline_quality": "INSUFFICIENT",
         }
-
     dataset_start = dates[0]
     anchor = dates[-1]
     recent_from = anchor - timedelta(days=RECENT_DAYS - 1)
@@ -110,11 +144,8 @@ def _analysis_window(events: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _event_evidence_ids(events: Iterable[dict[str, Any]]) -> list[str]:
-    return sorted({eid for event in events for eid in event.get("evidence_ids", []) if eid})
-
-
 def _window_stats(events: list[dict[str, Any]], window: dict[str, Any]) -> dict[str, Any]:
+    events = _unique_events(events)
     anchor = _parse_date(window.get("anchor_date"))
     recent_from = _parse_date(window.get("recent_from"))
     baseline_to = _parse_date(window.get("baseline_to"))
@@ -176,8 +207,8 @@ def _window_stats(events: list[dict[str, Any]], window: dict[str, Any]) -> dict[
         "recent_vs_baseline_ratio": ratio,
         "status": status,
         "signal_eligible": signal_eligible,
-        "recent_event_ids": sorted(e["event_id"] for e in recent),
-        "baseline_event_ids": sorted(e["event_id"] for e in baseline),
+        "recent_event_ids": _event_ids(recent),
+        "baseline_event_ids": _event_ids(baseline),
         "recent_evidence_ids": _event_evidence_ids(recent),
     }
 
@@ -185,12 +216,13 @@ def _window_stats(events: list[dict[str, Any]], window: dict[str, Any]) -> dict[
 def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
     entities = {e["entity_id"]: e for e in bundle.get("entities", [])}
     event_map: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for event in bundle.get("events", []):
+    for event in _unique_events(bundle.get("events", [])):
         for entity_id in set(event.get("entity_ids", [])):
             event_map[entity_id].append(event)
 
     rows: list[dict[str, Any]] = []
-    for entity_id, events in sorted(event_map.items()):
+    for entity_id, raw_events in sorted(event_map.items()):
+        events = _unique_events(raw_events)
         entity = entities.get(entity_id, {})
         dated = sorted(
             ((d, e) for e in events if (d := _publication_date(e))),
@@ -200,7 +232,6 @@ def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
         source_names = sorted({_source_name(e) for e in events if _source_name(e)})
         phenomena = sorted({p for e in events for p in _phenomena(e)})
         territories = sorted({t for e in events for t in e.get("territory_ids", [])})
-        evidence_ids = _event_evidence_ids(events)
         monthly = Counter(d.strftime("%Y-%m") for d, _ in dated)
         occurrence_from = sorted(
             x for e in events
@@ -243,8 +274,8 @@ def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
             "monthly_event_counts": dict(sorted(monthly.items())),
             "phenomena": phenomena,
             "territory_ids": territories,
-            "event_ids": sorted(e["event_id"] for e in events),
-            "evidence_ids": evidence_ids,
+            "event_ids": _event_ids(events),
+            "evidence_ids": _event_evidence_ids(events),
             "occurrence_known_event_count": known_occurrence_count,
             "first_known_occurrence_from": occurrence_from[0] if occurrence_from else None,
             "last_known_occurrence_to": occurrence_to[-1] if occurrence_to else None,
@@ -258,7 +289,7 @@ def derive_entity_activity(bundle: dict[str, list[dict[str, Any]]]) -> list[dict
 
 def derive_phenomenon_windows(bundle: dict[str, list[dict[str, Any]]], window: dict[str, Any]) -> list[dict[str, Any]]:
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for event in bundle.get("events", []):
+    for event in _unique_events(bundle.get("events", [])):
         for phenomenon in _phenomena(event):
             grouped[phenomenon].append(event)
     rows = []
@@ -280,13 +311,13 @@ def derive_phenomenon_windows(bundle: dict[str, list[dict[str, Any]]], window: d
 def derive_territorial_windows(bundle: dict[str, list[dict[str, Any]]], window: dict[str, Any]) -> list[dict[str, Any]]:
     territory_lookup = {t["territory_id"]: t for t in bundle.get("territories", [])}
     grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
-    for event in bundle.get("events", []):
+    for event in _unique_events(bundle.get("events", [])):
         for territory_id in set(event.get("territory_ids", [])):
             for phenomenon in _phenomena(event):
                 grouped[(territory_id, phenomenon)].append(event)
     rows = []
     for (territory_id, phenomenon), events in sorted(grouped.items()):
-        if len(events) < 2:
+        if len(_unique_events(events)) < 2:
             continue
         territory = territory_lookup.get(territory_id, {})
         rows.append({
@@ -306,102 +337,112 @@ def derive_territorial_windows(bundle: dict[str, list[dict[str, Any]]], window: 
     return rows
 
 
-def _strong_entity(entity_id: str, entity_lookup: dict[str, dict[str, Any]]) -> bool:
-    row = entity_lookup.get(entity_id, {})
-    return row.get("entity_type") in _SIGNAL_ENTITY_TYPES or bool(row.get("rut_normalized"))
+def _anchor_is_eligible(entity: dict[str, Any], event_count: int, max_anchor_events: int) -> bool:
+    if not entity:
+        return False
+    if entity.get("entity_type") not in _SIGNAL_ENTITY_TYPES and not entity.get("rut_normalized"):
+        return False
+    confidence = float(entity.get("identity_confidence") or 0.0)
+    if entity.get("rut_normalized"):
+        confidence = max(confidence, 0.99)
+    if confidence < CLUSTER_ANCHOR_MIN_CONFIDENCE:
+        return False
+    return 2 <= event_count <= max_anchor_events
+
+
+def _split_by_gap(events: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    ordered = sorted(_unique_events(events), key=lambda e: (_publication_date(e) or date.min, e.get("event_id", "")))
+    if not ordered:
+        return []
+    segments: list[list[dict[str, Any]]] = [[ordered[0]]]
+    for event in ordered[1:]:
+        previous = segments[-1][-1]
+        prev_date = _publication_date(previous)
+        event_date = _publication_date(event)
+        if prev_date and event_date and (event_date - prev_date).days <= CLUSTER_MAX_GAP_DAYS:
+            segments[-1].append(event)
+        else:
+            segments.append([event])
+    return segments
 
 
 def derive_event_clusters(bundle: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
-    events = [e for e in bundle.get("events", []) if _publication_date(e)]
-    by_id = {e["event_id"]: e for e in events}
+    """Clusters por la misma ancla estable, sin bridging transitivo."""
+    events = [e for e in _unique_events(bundle.get("events", [])) if _publication_date(e)]
     entity_lookup = {e["entity_id"]: e for e in bundle.get("entities", [])}
-    parent = {eid: eid for eid in by_id}
+    total_events = len(events)
+    if total_events < 2:
+        return []
 
-    def find(x: str) -> str:
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    def union(a: str, b: str) -> None:
-        ra, rb = find(a), find(b)
-        if ra != rb:
-            parent[rb] = ra
-
-    by_phenomenon: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    anchor_events: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for event in events:
-        for phenomenon in _phenomena(event):
-            if _stable_signal_phenomenon(phenomenon):
-                by_phenomenon[phenomenon].append(event)
+        for entity_id in set(event.get("entity_ids", [])):
+            anchor_events[entity_id].append(event)
 
-    for group in by_phenomenon.values():
-        ordered = sorted(group, key=lambda e: (_publication_date(e) or date.min, e["event_id"]))
-        for i, left in enumerate(ordered):
-            left_date = _publication_date(left)
-            if not left_date:
-                continue
-            left_entities = set(left.get("entity_ids", []))
-            left_territories = set(left.get("territory_ids", []))
-            left_phenomena = _phenomena(left)
-            for right in ordered[i + 1:]:
-                right_date = _publication_date(right)
-                if not right_date:
-                    continue
-                if (right_date - left_date).days > CLUSTER_MAX_GAP_DAYS:
-                    break
-                shared_entities = left_entities & set(right.get("entity_ids", []))
-                shared_territories = left_territories & set(right.get("territory_ids", []))
-                shared_phenomena = left_phenomena & _phenomena(right)
-                strong_shared = {eid for eid in shared_entities if _strong_entity(eid, entity_lookup)}
-                if strong_shared or len(shared_entities) >= 2 or (shared_territories and len(shared_phenomena) >= 2):
-                    union(left["event_id"], right["event_id"])
+    max_anchor_events = max(12, math.floor(total_events * CLUSTER_ANCHOR_MAX_SHARE))
+    max_cluster_events = max(12, math.floor(total_events * CLUSTER_MAX_DATASET_SHARE))
 
-    components: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for event in events:
-        components[find(event["event_id"])].append(event)
-
-    rows = []
-    for component in components.values():
-        if len(component) < 2:
+    # Exactamente el mismo conjunto de eventos se consolida agregando anclas.
+    candidates: dict[tuple[str, ...], dict[str, Any]] = {}
+    for entity_id, raw_events in sorted(anchor_events.items()):
+        unique = _unique_events(raw_events)
+        entity = entity_lookup.get(entity_id, {})
+        if not _anchor_is_eligible(entity, len(unique), max_anchor_events):
             continue
-        component = sorted(component, key=lambda e: (_publication_date(e) or date.min, e["event_id"]))
-        entity_counts = Counter(eid for e in component for eid in set(e.get("entity_ids", [])))
-        territory_counts = Counter(tid for e in component for tid in set(e.get("territory_ids", [])))
-        phenomenon_counts = Counter(p for e in component for p in _phenomena(e))
-        shared_entities = sorted(eid for eid, n in entity_counts.items() if n >= 2)
-        shared_territories = sorted(tid for tid, n in territory_counts.items() if n >= 2)
-        recurring_phenomena = sorted(p for p, n in phenomenon_counts.items() if n >= 2)
-        strong_shared = sorted(eid for eid in shared_entities if _strong_entity(eid, entity_lookup))
+        for segment in _split_by_gap(unique):
+            if len(segment) < 2 or len(segment) > max_cluster_events:
+                continue
+            ids = tuple(_event_ids(segment))
+            if len(ids) < 2:
+                continue
+            item = candidates.setdefault(ids, {"events": segment, "anchor_entity_ids": []})
+            item["anchor_entity_ids"].append(entity_id)
+
+    rows: list[dict[str, Any]] = []
+    for ids, candidate in candidates.items():
+        component = _unique_events(candidate["events"])
+        anchors = sorted(set(candidate["anchor_entity_ids"]))
         sources = sorted({_source_name(e) for e in component if _source_name(e)})
         dates = sorted({_publication_date(e) for e in component if _publication_date(e)})
-        if not shared_entities and not shared_territories:
+        territory_counts = Counter(t for e in component for t in set(e.get("territory_ids", [])))
+        phenomenon_counts = Counter(p for e in component for p in _phenomena(e))
+        shared_territories = sorted(t for t, n in territory_counts.items() if n >= 2)
+        recurring_phenomena = sorted(p for p, n in phenomenon_counts.items() if n >= 2)
+        anchor_rows = [entity_lookup.get(eid, {}) for eid in anchors]
+        strongest = max(
+            [float(r.get("identity_confidence") or 0.0) + (0.25 if r.get("rut_normalized") else 0.0) for r in anchor_rows] or [0.0]
+        )
+        strength = "STRONG" if strongest >= 0.90 and len(sources) >= 2 else ("MODERATE" if len(sources) >= 2 else "WEAK")
+        share = len(component) / total_events if total_events else 0.0
+        if share > CLUSTER_MAX_DATASET_SHARE:
             continue
-        strength = "STRONG" if strong_shared and len(sources) >= 2 else ("MODERATE" if len(sources) >= 2 else "WEAK")
-        event_ids = sorted(e["event_id"] for e in component)
         rows.append({
-            "cluster_id": stable_id("cluster:press", *event_ids),
+            "cluster_id": stable_id("cluster:press", *ids),
             "producer_id": PRODUCER_ID,
-            "cluster_type": "ENTITY_ANCHORED" if strong_shared else "MULTI_ANCHOR",
+            "cluster_type": "STABLE_ENTITY_ANCHOR",
             "cluster_strength": strength,
+            "cluster_rule_version": "anchor-v1.1",
             "time_basis": "PUBLICATION_DATE",
             "publication_date_from": dates[0].isoformat() if dates else None,
             "publication_date_to": dates[-1].isoformat() if dates else None,
             "publication_span_days": ((dates[-1] - dates[0]).days + 1) if dates else 0,
             "event_count": len(component),
+            "dataset_share_pct": round(share * 100, 2),
             "active_publication_days": len(dates),
             "source_count": len(sources),
             "source_names": sources,
-            "event_ids": event_ids,
+            "event_ids": list(ids),
             "evidence_ids": _event_evidence_ids(component),
-            "shared_entity_ids": shared_entities,
-            "strong_shared_entity_ids": strong_shared,
+            "anchor_entity_ids": anchors,
+            "anchor_entity_names": sorted({str(r.get("canonical_name")) for r in anchor_rows if r.get("canonical_name")}),
+            "anchor_identity_methods": sorted({str(r.get("identity_method")) for r in anchor_rows if r.get("identity_method")}),
             "shared_territory_ids": shared_territories,
             "recurring_phenomena": recurring_phenomena,
             "semantics": "CONTEXTUAL_EVENT_CLUSTER",
-            "explanation": "Eventos próximos en el tiempo conectados por fenómenos y anclas compartidas (entidades y/o territorios).",
+            "explanation": "Eventos próximos en el tiempo que comparten la misma entidad ancla estable. No se permite bridging transitivo entre anclas distintas.",
             "interpretation_guardrail": "El cluster es una agrupación analítica de publicaciones; no prueba que todos los eventos correspondan al mismo hecho, caso o red criminal.",
         })
-    return sorted(rows, key=lambda r: (-r["event_count"], r["cluster_id"]))
+    return sorted(rows, key=lambda r: (-r["event_count"], -r["source_count"], r["cluster_id"]))
 
 
 def derive_longitudinal_signals(
@@ -424,7 +465,7 @@ def derive_longitudinal_signals(
             "signal_id": stable_id("signal:press", "entity_recurrence", row["entity_id"], row.get("last_seen_publication")),
             "producer_id": PRODUCER_ID,
             "signal_type": "ENTITY_RECURRENCE",
-            "rule_version": "longitudinal-v1.0",
+            "rule_version": "longitudinal-v1.1",
             "scope": {"entity_id": row["entity_id"], "canonical_name": row.get("canonical_name"), "entity_type": entity_type, "time_basis": "PUBLICATION_DATE"},
             "value": row["event_count"],
             "threshold": RECURRENT_ENTITY_MIN_EVENTS,
@@ -434,7 +475,7 @@ def derive_longitudinal_signals(
                 "first_seen_publication": row.get("first_seen_publication"),
                 "last_seen_publication": row.get("last_seen_publication"),
             },
-            "event_ids": row["event_ids"],
+            "event_ids": sorted(set(row["event_ids"])),
             "evidence_ids": row["evidence_ids"],
             "semantics": "CONTEXT_ONLY",
             "explanation": f"La entidad aparece en {row['event_count']} eventos, {row['active_publication_days']} fechas y {row['source_count']} fuentes.",
@@ -450,19 +491,14 @@ def derive_longitudinal_signals(
             "signal_id": stable_id("signal:press", signal_type, row["phenomenon"], row.get("window", {}).get("anchor_date")),
             "producer_id": PRODUCER_ID,
             "signal_type": signal_type,
-            "rule_version": "longitudinal-v1.0",
+            "rule_version": "longitudinal-v1.1",
             "scope": {"phenomenon": row["phenomenon"], "time_basis": "PUBLICATION_DATE"},
             "value": row["recent_count"],
             "threshold": 3,
             "window": row["window"],
             "baseline": {"count": row["baseline_count"], "observed_days": row["baseline_observed_days"], "weekly_rate": row["baseline_weekly_rate"]},
-            "metrics": {
-                "status": status,
-                "recent_source_count": row["recent_source_count"],
-                "recent_active_days": row["recent_active_days"],
-                "recent_vs_baseline_ratio": row["recent_vs_baseline_ratio"],
-            },
-            "event_ids": row["recent_event_ids"],
+            "metrics": {"status": status, "recent_source_count": row["recent_source_count"], "recent_active_days": row["recent_active_days"], "recent_vs_baseline_ratio": row["recent_vs_baseline_ratio"]},
+            "event_ids": sorted(set(row["recent_event_ids"])),
             "evidence_ids": row["recent_evidence_ids"],
             "semantics": "CONTEXT_ONLY",
             "explanation": f"{row['phenomenon']} registra {row['recent_count']} publicaciones recientes frente a una tasa basal semanal de {row['baseline_weekly_rate']}.",
@@ -476,25 +512,14 @@ def derive_longitudinal_signals(
             "signal_id": stable_id("signal:press", "territorial_momentum", row["territory_id"], row["phenomenon"], row.get("window", {}).get("anchor_date")),
             "producer_id": PRODUCER_ID,
             "signal_type": "TERRITORIAL_MOMENTUM",
-            "rule_version": "longitudinal-v1.0",
-            "scope": {
-                "territory_id": row["territory_id"],
-                "territory_name": row.get("territory_name"),
-                "administrative_level": row.get("administrative_level"),
-                "phenomenon": row["phenomenon"],
-                "time_basis": "PUBLICATION_DATE",
-            },
+            "rule_version": "longitudinal-v1.1",
+            "scope": {"territory_id": row["territory_id"], "territory_name": row.get("territory_name"), "administrative_level": row.get("administrative_level"), "phenomenon": row["phenomenon"], "time_basis": "PUBLICATION_DATE"},
             "value": row["recent_count"],
             "threshold": 3,
             "window": row["window"],
             "baseline": {"count": row["baseline_count"], "observed_days": row["baseline_observed_days"], "weekly_rate": row["baseline_weekly_rate"]},
-            "metrics": {
-                "status": row["status"],
-                "recent_source_count": row["recent_source_count"],
-                "recent_active_days": row["recent_active_days"],
-                "recent_vs_baseline_ratio": row["recent_vs_baseline_ratio"],
-            },
-            "event_ids": row["recent_event_ids"],
+            "metrics": {"status": row["status"], "recent_source_count": row["recent_source_count"], "recent_active_days": row["recent_active_days"], "recent_vs_baseline_ratio": row["recent_vs_baseline_ratio"]},
+            "event_ids": sorted(set(row["recent_event_ids"])),
             "evidence_ids": row["recent_evidence_ids"],
             "semantics": "CONTEXT_ONLY",
             "explanation": f"Aumenta la cobertura reciente de {row['phenomenon']} asociada a {row.get('territory_name') or row['territory_id']}.",
@@ -508,21 +533,16 @@ def derive_longitudinal_signals(
             "signal_id": stable_id("signal:press", "cross_source_event_cluster", row["cluster_id"]),
             "producer_id": PRODUCER_ID,
             "signal_type": "CROSS_SOURCE_EVENT_CLUSTER",
-            "rule_version": "longitudinal-v1.0",
-            "scope": {"cluster_id": row["cluster_id"], "cluster_type": row["cluster_type"], "cluster_strength": row["cluster_strength"], "time_basis": "PUBLICATION_DATE"},
+            "rule_version": "cluster-anchor-v1.1",
+            "scope": {"cluster_id": row["cluster_id"], "cluster_type": row["cluster_type"], "cluster_strength": row["cluster_strength"], "anchor_entity_ids": row.get("anchor_entity_ids", []), "time_basis": "PUBLICATION_DATE"},
             "value": row["event_count"],
             "threshold": CLUSTER_SIGNAL_MIN_EVENTS,
-            "metrics": {
-                "source_count": row["source_count"],
-                "active_publication_days": row["active_publication_days"],
-                "publication_date_from": row["publication_date_from"],
-                "publication_date_to": row["publication_date_to"],
-            },
-            "event_ids": row["event_ids"],
+            "metrics": {"source_count": row["source_count"], "active_publication_days": row["active_publication_days"], "publication_date_from": row["publication_date_from"], "publication_date_to": row["publication_date_to"], "dataset_share_pct": row.get("dataset_share_pct")},
+            "event_ids": sorted(set(row["event_ids"])),
             "evidence_ids": row["evidence_ids"],
             "semantics": "CONTEXT_ONLY",
-            "explanation": f"Cluster de {row['event_count']} eventos conectados observado en {row['source_count']} fuentes.",
-            "interpretation_guardrail": "El cluster sugiere continuidad temática o relacional para revisión humana; no consolida automáticamente los eventos como un único caso.",
+            "explanation": f"Cluster de {row['event_count']} eventos conectados por la misma ancla estable, observado en {row['source_count']} fuentes.",
+            "interpretation_guardrail": "El cluster sugiere continuidad para revisión humana; no consolida automáticamente los eventos como un único caso.",
         })
     return sorted(signals, key=lambda r: (r["signal_type"], r["signal_id"]))
 

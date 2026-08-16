@@ -1,6 +1,6 @@
-# Radar Prensa · v0.3.0
+# Radar Prensa · v0.3.1
 
-Radar OSINT de prensa contextual y longitudinal para el ecosistema de radares AML/LA-FT. No reemplaza el **Monitor UAF**: transforma publicaciones ya detectadas y enriquecidas en memoria histórica interoperable para aportar contexto temporal, territorial, sectorial, relacional y longitudinal al **Intelligence Fusion Layer**.
+Radar OSINT de prensa contextual y longitudinal para el ecosistema de radares AML/LA-FT. No reemplaza el **Monitor UAF**: transforma publicaciones detectadas y enriquecidas en memoria histórica interoperable para aportar contexto temporal, territorial, sectorial, relacional y longitudinal al **Intelligence Fusion Layer**.
 
 ## Arquitectura
 
@@ -42,77 +42,60 @@ El radar consume el `datos.json` enriquecido de `Monitor/monitor-state`. El Moni
 
 ## v0.3 — Inteligencia longitudinal
 
-La v0.3 incorpora una capa determinística para detectar **recurrencia, cambio y continuidad** en la memoria de prensa. No genera scores de delito ni de LA/FT.
+La familia v0.3 incorpora una capa determinística para detectar **recurrencia, cambio y continuidad** en la memoria de prensa. No genera scores de delito ni de LA/FT.
 
 ### 1. Recurrencia de entidades
 
-`entity_activity.jsonl` consolida para cada entidad:
-
-- primera y última aparición por fecha de publicación;
-- número de eventos, días activos y fuentes distintas;
-- evolución mensual;
-- fenómenos y territorios asociados;
-- cobertura conocida de fecha de ocurrencia;
-- eventos y evidencia que sustentan el perfil.
-
-Una entidad se clasifica como `RECURRENT` cuando aparece en al menos **4 eventos**, **3 fechas distintas** y **2 fuentes**. Esta clasificación describe recurrencia periodística, no participación o responsabilidad.
+`entity_activity.jsonl` consolida primera/última aparición, número de eventos, días activos, fuentes, evolución mensual, fenómenos, territorios y evidencia. Una entidad se clasifica como `RECURRENT` cuando aparece en al menos **4 eventos**, **3 fechas distintas** y **2 fuentes**. La clasificación describe recurrencia periodística, no participación o responsabilidad.
 
 ### 2. Emergencia y momentum de fenómenos
 
-`phenomenon_windows.jsonl` compara una ventana reciente de **7 días** con un baseline previo de **28 días**.
+`phenomenon_windows.jsonl` compara una ventana reciente de **7 días** con un baseline previo de **28 días**. La ventana se ancla en la última fecha de publicación disponible para que el cálculo sea reproducible.
 
-La ventana se ancla en la última fecha de publicación disponible en el snapshot, no en la hora del sistema, para que el cálculo sea reproducible.
-
-Estados principales:
-
-- `NEW_ACTIVITY`: actividad reciente con baseline suficientemente observado y sin antecedentes en la ventana basal;
-- `ELEVATED`: actividad reciente materialmente superior a la tasa semanal basal;
-- `STABLE`: sin cambio suficiente;
-- `LOW_VOLUME`: volumen reciente insuficiente;
-- `INSUFFICIENT_BASELINE`: no existe historia suficiente para afirmar emergencia o momentum.
-
-Para emitir una señal longitudinal se exigen además **múltiples fuentes** y **al menos dos días activos**, evitando convertir republicaciones masivas de una misma noticia en una falsa tendencia.
+Estados principales: `NEW_ACTIVITY`, `ELEVATED`, `STABLE`, `LOW_VOLUME` e `INSUFFICIENT_BASELINE`. Para emitir una señal se exigen múltiples fuentes y al menos dos días activos. Desde v0.3.1, `PHENOMENON_EMERGENCE` y `PHENOMENON_MOMENTUM` sólo se emiten para la taxonomía gobernada `PHENOMENA`; etiquetas de caso o upstream se conservan como contexto, pero no se promueven a fenómeno emergente.
 
 ### 3. Momentum temporal-territorial
 
-`territorial_windows.jsonl` aplica la misma lógica a cada combinación `territorio + fenómeno` observada al menos dos veces.
+`territorial_windows.jsonl` aplica la misma lógica a cada combinación `territorio + fenómeno` observada al menos dos veces. La asociación territorial sigue siendo contextual: no acredita lugar de ocurrencia ni mayor riesgo AML del territorio.
 
-Esto permite identificar preguntas como:
+### 4. Clusters de acontecimientos · hardening v0.3.1
 
-> ¿Aumentó recientemente la cobertura de contrabando asociada a una región o comuna respecto de su propio baseline?
+`event_clusters.jsonl` usa `STABLE_ENTITY_ANCHOR`: un cluster sólo puede formarse alrededor de **la misma entidad ancla estable**. Se eliminó el bridging transitivo que podía unir casos sucesivamente mediante entidades diferentes.
 
-La asociación territorial sigue siendo contextual: no acredita que todos los hechos hayan ocurrido allí ni que el territorio tenga mayor riesgo AML.
+Política de clustering v1.1:
 
-### 4. Clusters de acontecimientos
-
-`event_clusters.jsonl` agrupa eventos cercanos en el tiempo cuando existen anclas compartidas suficientemente fuertes:
-
-- entidad relevante compartida; o
-- múltiples entidades compartidas; o
-- territorio compartido junto con múltiples fenómenos comunes.
-
-La distancia máxima entre publicaciones conectables es de **21 días**. El cluster conserva eventos, fuentes, entidades, territorios, fenómenos y evidencia.
+- máximo gap entre publicaciones de una misma ancla: **21 días**;
+- confianza mínima del ancla: **0,75**;
+- una entidad presente en más del **10 %** del universo no actúa como ancla, evitando entidades-hub;
+- ningún cluster puede superar el **15 %** del dataset;
+- clusters con exactamente el mismo conjunto de eventos se consolidan;
+- `event_ids` dentro de productos analíticos deben ser únicos.
 
 Un cluster es una **hipótesis de continuidad analítica para revisión humana**. No fusiona automáticamente publicaciones en un único caso, investigación o red criminal.
 
+### 5. Identidad de documentos e IDs · v0.3.1
+
+El importador colapsa aliases del mismo artículo cuando coinciden simultáneamente URL normalizada, medio, título y fecha. Esto evita duplicados derivados, por ejemplo, de diferencias de mayúsculas/minúsculas en paths sin asumir que toda URL web sea globalmente case-insensitive. CI exige unicidad de `document_id` y `event_id` antes de publicar `radar-state`.
+
 ## Time basis y baseline
 
-La inteligencia longitudinal usa `PUBLICATION_DATE` como base temporal general. Esto es deliberado: la fecha de publicación tiene cobertura completa, mientras la fecha de ocurrencia sólo existe cuando la evidencia permite inferirla de forma trazable.
+La inteligencia longitudinal usa `PUBLICATION_DATE` como base temporal general. La fecha de ocurrencia se conserva como enriquecimiento, pero no se utiliza para el baseline general mientras su cobertura sea parcial.
 
-La fecha de ocurrencia se conserva como enriquecimiento y contexto histórico, pero no se utiliza para calcular el baseline general mientras su cobertura sea parcial.
-
-Política v1.0:
+Política longitudinal v1.1:
 
 ```text
-ventana reciente        = 7 días
-baseline previo         = 28 días
-mínimo baseline útil    = 14 días
-mínimo para NEW_ACTIVITY= 21 días
-recurrencia entidad     = 4 eventos + 3 fechas + 2 fuentes
-máximo gap cluster      = 21 días
+ventana reciente             = 7 días
+baseline previo              = 28 días
+mínimo baseline útil         = 14 días
+mínimo para NEW_ACTIVITY     = 21 días
+recurrencia entidad          = 4 eventos + 3 fechas + 2 fuentes
+máximo gap cluster           = 21 días
+máximo presencia ancla       = 10 % del universo
+máximo tamaño cluster        = 15 % del universo
+bridging transitivo cluster  = deshabilitado
 ```
 
-Las reglas y parámetros quedan registrados en `manifest.json`.
+Las reglas quedan registradas en `manifest.json`.
 
 ## Familia v0.2 — territorio y Temporal Intelligence
 
@@ -142,32 +125,20 @@ Cada corrida genera en `data/exports/`:
 - `relationships.jsonl`
 - `sectors.jsonl`
 - `temporal_assertions.jsonl`
-- `entity_activity.jsonl` **(v0.3)**
-- `phenomenon_windows.jsonl` **(v0.3)**
-- `territorial_windows.jsonl` **(v0.3)**
-- `event_clusters.jsonl` **(v0.3)**
+- `entity_activity.jsonl`
+- `phenomenon_windows.jsonl`
+- `territorial_windows.jsonl`
+- `event_clusters.jsonl`
 - `signals.jsonl`
 - `manifest.json`
 
 `events`, `evidence` y `entities` conservan compatibilidad con los campos obligatorios de los contratos canónicos equivalentes del Intelligence Fusion Layer.
 
-## Signals v0.3
+## Signals
 
-Se mantienen:
+Se mantienen `MEDIA_BURST`, `GEOGRAPHIC_CONCENTRATION` y `SOURCE_CONVERGENCE`. La familia v0.3 agrega `ENTITY_RECURRENCE`, `PHENOMENON_EMERGENCE`, `PHENOMENON_MOMENTUM`, `TERRITORIAL_MOMENTUM` y `CROSS_SOURCE_EVENT_CLUSTER`.
 
-- `MEDIA_BURST`
-- `GEOGRAPHIC_CONCENTRATION`
-- `SOURCE_CONVERGENCE`
-
-Se agregan:
-
-- `ENTITY_RECURRENCE`
-- `PHENOMENON_EMERGENCE`
-- `PHENOMENON_MOMENTUM`
-- `TERRITORIAL_MOMENTUM`
-- `CROSS_SOURCE_EVENT_CLUSTER`
-
-Todas las señales son `CONTEXT_ONLY`, conservan regla/ventana/métricas cuando corresponde y, en las señales longitudinales, referencias directas a `event_ids` y `evidence_ids`.
+Todas las señales son `CONTEXT_ONLY`, conservan regla/ventana/métricas cuando corresponde y referencias a `event_ids` y `evidence_ids` en las señales longitudinales.
 
 ## Guardrails metodológicos
 
@@ -175,7 +146,6 @@ Todas las señales son `CONTEXT_ONLY`, conservan regla/ventana/métricas cuando 
 - Fecha de publicación ≠ fecha de ocurrencia.
 - Inferencias temporales conservan regla, evidencia, precisión y confianza.
 - Mención, coaparición, recurrencia o proximidad territorial no atribuye conducta ni propaga riesgo AML.
-- Jerarquía territorial no es relación entre entidades.
 - Sólo se conservan relaciones entre entidades que el Monitor marcó como explícitas.
 - Momentum o emergencia = cambio de cobertura periodística, no aumento probado de incidencia delictual.
 - Clustering = agrupación analítica para revisión, no consolidación automática de un caso.
@@ -192,13 +162,11 @@ PYTHONPATH=src python -m radar_prensa.cli \
 
 ## Automatización
 
-`.github/workflows/radar.yml` ejecuta pruebas, reconstruye el snapshot desde `Monitor/monitor-state`, valida los productos v0.3 y publica en `radar-state`. En pull requests construye y valida, pero no publica estado.
-
-La actualización automática se mantiene cada tres horas y no requiere SMTP, secretos externos ni servidor.
+`.github/workflows/radar.yml` ejecuta pruebas, reconstruye el snapshot desde `Monitor/monitor-state`, valida unicidad y guardrails v0.3.1 y publica en `radar-state`. En pull requests construye y valida, pero no publica estado. La actualización automática se mantiene cada tres horas y no requiere SMTP, secretos externos ni servidor.
 
 ## Próximos pasos
 
-- auditar longitudinalmente el snapshot real y ajustar umbrales sólo con evidencia empírica;
+- seguir auditando umbrales longitudinales con evidencia empírica;
 - formalizar el adaptador de señales al **Signals Registry** del Intelligence Fusion Layer;
-- incorporar en una versión posterior colectores propios de prensa manteniendo compatibilidad con Monitor;
+- incorporar colectores propios de prensa manteniendo compatibilidad con Monitor;
 - avanzar hacia deduplicación semántica/caso-evento sin perder trazabilidad de cada publicación.
