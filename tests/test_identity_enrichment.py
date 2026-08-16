@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from radar_prensa.entities import extract_entities
 from radar_prensa.identity_enrichment import (
     enrich_bundle_from_rows,
+    enrich_bundle_with_sii,
     global_rut_entity_id,
     normalize_rut,
     valid_chilean_rut,
@@ -150,6 +153,50 @@ class IdentityEnrichmentTests(unittest.TestCase):
         self.assertEqual(resolution["status"], "RESOLVED")
         self.assertEqual(resolution["global_entity_key"], rut_id)
         self.assertEqual(resolution["reference_asset_digest"], "sha256:test")
+
+    def test_duckdb_parquet_path_matches_production_shape(self):
+        import duckdb
+
+        name_id = stable_id("entity:press", "Importadora Norte SpA")
+        bundle = {
+            "entities": [
+                {
+                    "entity_id": name_id,
+                    "entity_type": "LEGAL_ENTITY",
+                    "canonical_name": "Importadora Norte SpA",
+                    "rut_normalized": None,
+                    "aliases": [],
+                    "roles": ["PRESS_MENTION"],
+                    "producer_ids": ["radar_prensa"],
+                    "evidence_ids": ["EVD-A"],
+                    "identity_method": "SOURCE_NATIVE",
+                    "identity_confidence": 0.9,
+                    "attributes": {},
+                }
+            ],
+            "events": [{"event_id": "EVT-1", "entity_ids": [name_id]}],
+            "entity_mentions": [],
+            "event_entities": [],
+            "relationships": [],
+        }
+        with tempfile.TemporaryDirectory() as td:
+            parquet = Path(td) / "entity_search.parquet"
+            con = duckdb.connect()
+            try:
+                target = str(parquet).replace("'", "''")
+                con.execute(
+                    f"COPY (SELECT 'ENT-RUT-761234560' AS entity_id, '761234560' AS rut, "
+                    f"'IMPORTADORA NORTE SPA' AS legal_name) TO '{target}' (FORMAT PARQUET)"
+                )
+            finally:
+                con.close()
+
+            stats = enrich_bundle_with_sii(bundle, parquet)
+
+        self.assertEqual(stats["status"], "ACTIVE")
+        self.assertEqual(stats["resolved"], 1)
+        self.assertEqual(bundle["entities"][0]["entity_id"], "ENT-RUT-761234560")
+        self.assertEqual(bundle["identity_resolutions"][0]["status"], "RESOLVED")
 
     def test_ambiguous_official_name_does_not_promote(self):
         name_id = stable_id("entity:press", "Servicios del Norte SpA")
