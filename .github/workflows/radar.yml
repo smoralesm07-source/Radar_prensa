@@ -123,7 +123,7 @@ jobs:
       - name: Construir snapshot interoperable
         run: PYTHONPATH=src python -m radar_prensa.cli --source "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json" --output data/exports
 
-      - name: Validar productos v0.4.0
+      - name: Validar productos v0.4.1
         env:
           EXPECT_SII_IDENTITY: ${{ github.event_name != 'pull_request' }}
         shell: bash
@@ -181,7 +181,7 @@ jobs:
           }, ensure_ascii=False))
 
           assert m['producer_id']=='radar_prensa'
-          assert m['version']=='0.4.0'
+          assert m['version']=='0.4.1'
           assert m['counts']['documents'] == m['counts']['events']
           assert m['counts']['identity_resolutions'] == len(resolutions)
           assert len({r['document_id'] for r in documents}) == len(documents), 'document_id duplicado'
@@ -194,11 +194,13 @@ jobs:
           identity=m['identity_enrichment']
           expected=os.environ.get('EXPECT_SII_IDENTITY','false').lower()=='true'
           assert identity['status'] == ('ACTIVE' if expected else 'NOT_RUN_NO_REFERENCE')
+          assert identity['global_entity_key_policy'] == 'ENT-RUT-{RUT_CANONICO_CON_GUION}'
           if expected:
               assert identity.get('reference_asset_digest','').startswith('sha256:')
           for entity in entities:
               if entity.get('identity_method') == 'RUT_EXACT':
                   assert valid_chilean_rut(entity.get('rut_normalized')), entity
+                  assert entity.get('entity_id') == f"ENT-RUT-{entity.get('rut_normalized')}", entity
 
           policy=m['analysis']['longitudinal_policy']
           assert policy['time_basis'] == 'PUBLICATION_DATE'
