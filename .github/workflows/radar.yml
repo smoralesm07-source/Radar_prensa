@@ -1,0 +1,81 @@
+name: Radar Prensa - actualizar contexto
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "config/**"
+      - ".github/workflows/radar.yml"
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: radar-prensa
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Tests sin dependencias externas
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+
+      - name: Construir snapshot interoperable
+        run: PYTHONPATH=src python -m radar_prensa.cli --source "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json" --output data/exports
+
+      - name: Validar productos
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in documents events evidence entities territories entity_mentions event_entities event_territories relationships sectors signals; do
+            test -f "data/exports/${f}.jsonl"
+          done
+          test -s data/exports/manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/exports/manifest.json').read_text())
+          print(json.dumps(m, indent=2, ensure_ascii=False))
+          assert m['producer_id']=='radar_prensa'
+          assert m['counts']['documents'] == m['counts']['events']
+          PY
+
+      - name: Publicar snapshot en rama radar-state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "radar-bot"
+          git config user.email "radar-bot@users.noreply.github.com"
+          tmp=$(mktemp -d)
+          cp -R data/exports "$tmp/exports"
+          git fetch origin radar-state || true
+          if git show-ref --verify --quiet refs/remotes/origin/radar-state; then
+            git switch --force-create radar-state origin/radar-state
+          else
+            git switch --orphan radar-state
+            git rm -rf . || true
+          fi
+          rm -rf data
+          mkdir -p data
+          cp -R "$tmp/exports" data/exports
+          git add data/exports
+          git commit -m "radar-prensa: snapshot ${GITHUB_RUN_ID}" || exit 0
+          git push origin radar-state
