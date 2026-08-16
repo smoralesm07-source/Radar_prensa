@@ -9,7 +9,8 @@ from radar_prensa.geo_catalog import catalog_counts
 from radar_prensa.geography import extract_territories
 from radar_prensa.importer import extract_records
 from radar_prensa.longitudinal import derive_longitudinal
-from radar_prensa.pipeline import derive_context_signals, run, transform
+from radar_prensa.pipeline import derive_context_signals, transform
+from radar_prensa.pipeline_v040 import run
 from radar_prensa.temporal import event_temporal
 
 
@@ -265,14 +266,15 @@ class RadarPrensaTests(unittest.TestCase):
             source.write_text(json.dumps(longitudinal_payload()), encoding="utf-8")
             out = root / "exports"
             manifest = run(str(source), str(out))
-            self.assertEqual(manifest["version"], "0.3.1")
+            self.assertEqual(manifest["version"], "0.4.0")
             self.assertEqual(manifest["counts"]["events"], 6)
             self.assertEqual(manifest["quality"]["geography_catalog"]["communes"], 346)
             self.assertGreaterEqual(manifest["counts"]["longitudinal_signals"], 3)
             self.assertEqual(manifest["analysis"]["analysis_window"]["baseline_quality"], "FULL")
+            self.assertEqual(manifest["identity_enrichment"]["status"], "NOT_RUN_NO_REFERENCE")
             for filename in (
                 "events.jsonl", "temporal_assertions.jsonl", "relationships.jsonl",
-                "entity_activity.jsonl", "phenomenon_windows.jsonl", "territorial_windows.jsonl",
+                "identity_resolutions.jsonl", "entity_activity.jsonl", "phenomenon_windows.jsonl", "territorial_windows.jsonl",
                 "event_clusters.jsonl", "signals.jsonl", "manifest.json",
             ):
                 self.assertTrue((out / filename).exists(), filename)
