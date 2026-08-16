@@ -33,12 +33,24 @@ _LEVEL_CUE = {
     "REGION": re.compile(r"(?:region|gobierno\s+regional)\s+(?:de\s+|del\s+|la\s+|el\s+)?$"),
 }
 _PLACE_CUE = re.compile(
-    r"(?:\ben|\bdesde|\bhacia|\bhasta|\bcerca\s+de|\ben\s+la\s+comuna\s+de|"
-    r"\ben\s+la\s+provincia\s+de|\ben\s+la\s+region\s+de|\bmunicipalidad\s+de|"
-    r"\bfiscalia\s+de|\btribunal\s+de|\bpuerto\s+de|\bpaso\s+fronterizo\s+de)\s*$"
+    r"(?:\ben|\bdesde|\bhacia|\bhasta|\bcerca\s+de|\bzona(?:\s+[a-z]+){0,2}\s+de|"
+    r"\ben\s+la\s+comuna\s+de|\ben\s+la\s+provincia\s+de|\ben\s+la\s+region\s+de|"
+    r"\bmunicipalidad\s+de|\bmunicipio\s+de|\bfiscalia(?:\s+regional)?\s+de|"
+    r"\bjuzgado(?:\s+de\s+garantia)?\s+de|\bcorte(?:\s+de\s+apelaciones)?\s+de|"
+    r"\btribunal(?:\s+[a-z]+){0,4}\s+de|\bpuerto\s+de|\bpaso\s+fronterizo\s+de)\s*$"
 )
+_SUBCOMMUNAL_CUE = re.compile(r"(?:poblacion|barrio|villa|sector|condominio|campamento)\s+(?:de\s+|la\s+|el\s+)?$")
 _PERSONAL_CUE = re.compile(r"(?:don|dona|sr|sra|senor|senora|dr|dra)\s+$")
 _VALID_LEVELS = {"COMUNA", "PROVINCIA", "REGION", "LOCALIDAD", "CIUDAD", "EXTRANJERO"}
+
+# Homónimos territoriales que requieren contexto extranjero explícito para
+# bloquear una promoción automática al catálogo chileno.
+_FOREIGN_COLLISIONS = {
+    "florida": {"estados unidos", "ee uu", "usa", "miami", "sarasota", "orlando", "tampa", "fort lauderdale"},
+    "los angeles": {"estados unidos", "ee uu", "usa", "california", "hollywood"},
+    "san antonio": {"estados unidos", "ee uu", "usa", "texas"},
+    "santa cruz": {"bolivia", "santa cruz de la sierra"},
+}
 
 
 def _flatten_locations(record: dict[str, Any]) -> list[Any]:
@@ -118,11 +130,45 @@ def _text_for_matching(record: dict[str, Any]) -> str:
     return " ".join(dict.fromkeys(parts))
 
 
+def _person_tokens(record: dict[str, Any]) -> set[str]:
+    """Tokens de nombres que el upstream ya reconoció como persona natural.
+
+    Evita promover apellidos/personas homónimos con comunas (p.ej. Carolina
+    Saavedra -> comuna de Saavedra). Un contexto geográfico explícito puede
+    prevalecer sobre esta protección.
+    """
+    tokens: set[str] = set()
+    for key in ("nomina_entidades", "entidades", "entities", "personas"):
+        value = record.get(key)
+        if not isinstance(value, list):
+            continue
+        for item in value:
+            if not isinstance(item, dict):
+                continue
+            nature = norm_text(item.get("naturaleza"))
+            raw_type = norm_text(item.get("tipo") or item.get("type"))
+            if "persona natural" not in nature and raw_type != "persona":
+                continue
+            name = norm_text(item.get("nombre") or item.get("name") or item.get("canonical_name"))
+            for token in name.split():
+                if len(token) >= 4:
+                    tokens.add(token)
+    return tokens
+
+
+def _foreign_collision(needle: str, normalized_text: str, explicit_level: bool) -> bool:
+    if explicit_level:
+        return False
+    markers = _FOREIGN_COLLISIONS.get(needle)
+    return bool(markers and any(marker in normalized_text for marker in markers))
+
+
 def _find_catalog_mentions(record: dict[str, Any]) -> list[dict[str, Any]]:
     normalized = norm_text(_text_for_matching(record))
     if not normalized:
         return []
     padded = f" {normalized} "
+    person_tokens = _person_tokens(record)
     found: list[dict[str, Any]] = []
     consumed: list[tuple[int, int]] = []
 
@@ -142,25 +188,32 @@ def _find_catalog_mentions(record: dict[str, Any]) -> list[dict[str, Any]]:
             start, end = match.span()
             if any(start >= a and end <= b for a, b in consumed):
                 continue
-            left = padded[max(0, start - 90):start]
+            left = padded[max(0, start - 100):start]
             explicit_level = bool(_LEVEL_CUE[level].search(left))
             place_cue = explicit_level or bool(_PLACE_CUE.search(left))
-            if level == "COMUNA" and needle in _AMBIGUOUS and not place_cue:
+            subcommunal_cue = bool(_SUBCOMMUNAL_CUE.search(left))
+
+            # v0.2.1: un match de catálogo sin señal geográfica ya no basta.
+            # Es preferible missing a inventar territorio en inteligencia.
+            if not place_cue:
                 continue
-            if level == "COMUNA" and _PERSONAL_CUE.search(left) and not place_cue:
+            if level == "COMUNA" and subcommunal_cue and not explicit_level:
+                continue
+            if level == "COMUNA" and _PERSONAL_CUE.search(left) and not explicit_level:
+                continue
+            if level == "COMUNA" and len(needle.split()) == 1 and needle in person_tokens and not explicit_level:
+                continue
+            if _foreign_collision(needle, normalized, explicit_level):
                 continue
 
             competing = []
             for lvl, index in (("COMUNA", _COMMUNE_INDEX), ("PROVINCIA", _PROVINCE_INDEX), ("REGION", _REGION_INDEX)):
                 if needle in index and lvl != level:
                     competing.append(lvl)
-            if competing and not explicit_level:
-                if level != "COMUNA":
-                    continue
-                if needle in _AMBIGUOUS and not place_cue:
-                    continue
+            if competing and not explicit_level and level != "COMUNA":
+                continue
 
-            confidence = 0.96 if explicit_level else (0.90 if place_cue else 0.76)
+            confidence = 0.97 if explicit_level else (0.90 if needle not in _AMBIGUOUS else 0.84)
             key = (level, canonical)
             if key in seen_semantic:
                 continue
@@ -170,9 +223,9 @@ def _find_catalog_mentions(record: dict[str, Any]) -> list[dict[str, Any]]:
                     level,
                     region if level != "REGION" else canonical,
                     confidence=confidence,
-                    origin="text_catalog_v0.2",
+                    origin="text_catalog_v0.2.1",
                     matched_text=canonical,
-                    match_rule="EXPLICIT_GEO_CUE" if explicit_level else ("PLACE_PREPOSITION" if place_cue else "CATALOG_EXACT"),
+                    match_rule="EXPLICIT_GEO_CUE" if explicit_level else "PLACE_CONTEXT",
                 )
             )
             seen_semantic.add(key)
@@ -189,7 +242,7 @@ def extract_territories(record: dict[str, Any]) -> list[dict[str, Any]]:
         if current is None:
             rows[row["territory_id"]] = row
             return
-        rank = {"monitor_upstream": 3, "monitor_upstream_catalog": 3, "text_catalog_v0.2": 2, "derived_hierarchy": 1}
+        rank = {"monitor_upstream": 4, "monitor_upstream_catalog": 4, "text_catalog_v0.2.1": 3, "text_catalog_v0.2": 2, "derived_hierarchy": 1}
         if rank.get(row.get("origin"), 0) > rank.get(current.get("origin"), 0):
             rows[row["territory_id"]] = row
 

@@ -60,6 +60,38 @@ class RadarPrensaTests(unittest.TestCase):
         rows = extract_territories({"titulo": "Operativo en la comuna de María Elena deja detenidos"})
         self.assertTrue(any(r["name"] == "María Elena" and r["administrative_level"] == "COMUNA" for r in rows))
 
+    def test_geography_person_surname_does_not_create_commune(self):
+        rows = extract_territories({
+            "titulo": "Periodista entrega nuevos antecedentes",
+            "texto_enriquecido": "La periodista Carolina Saavedra difundió una versión sobre el caso.",
+            "nomina_entidades": [{
+                "entidad_id": "ENT-PERSON",
+                "nombre": "Carolina Saavedra",
+                "tipo": "PERSONA",
+                "naturaleza": "PERSONA_NATURAL",
+            }],
+        })
+        self.assertFalse(any(r["name"] == "Saavedra" for r in rows))
+
+    def test_geography_foreign_homonym_is_not_chilean_commune(self):
+        rows = extract_territories({
+            "titulo": "Investigado permanece en Florida, Estados Unidos",
+            "texto_enriquecido": "El imputado se encuentra en Sarasota, Florida, Estados Unidos.",
+        })
+        self.assertFalse(any(r["name"] == "Florida" and r["administrative_level"] == "COMUNA" for r in rows))
+
+    def test_geography_subcommunal_name_is_not_promoted_to_commune(self):
+        rows = extract_territories({"titulo": "Operativo en la población San Gregorio dejó detenidos"})
+        self.assertFalse(any(r["name"] == "San Gregorio" and r["administrative_level"] == "COMUNA" for r in rows))
+        rows = extract_territories({"titulo": "Operativo en la comuna de San Gregorio dejó detenidos"})
+        self.assertTrue(any(r["name"] == "San Gregorio" and r["administrative_level"] == "COMUNA" for r in rows))
+
+    def test_geography_requires_place_context_for_text_only_match(self):
+        rows = extract_territories({"titulo": "Carolina Saavedra comentó el caso Santiago"})
+        self.assertFalse(any(r["name"] in {"Saavedra", "Santiago"} for r in rows))
+        rows = extract_territories({"titulo": "El tribunal de Santiago revisó la causa"})
+        self.assertTrue(any(r["name"] == "Santiago" and r["administrative_level"] == "COMUNA" for r in rows))
+
     def test_temporal_month_from_article_text(self):
         temporal = event_temporal({"fecha": "2026-08-16", "titulo": "La investigación comenzó en noviembre de 2025 y continuó durante meses."})
         self.assertEqual(temporal["occurrence_date_precision"], "MONTH")
@@ -113,7 +145,7 @@ class RadarPrensaTests(unittest.TestCase):
             source.write_text(json.dumps(sample_payload()), encoding="utf-8")
             out = root / "exports"
             manifest = run(str(source), str(out))
-            self.assertEqual(manifest["version"], "0.2.0")
+            self.assertEqual(manifest["version"], "0.2.1")
             self.assertEqual(manifest["counts"]["events"], 3)
             self.assertEqual(manifest["quality"]["geography_catalog"]["communes"], 346)
             self.assertGreaterEqual(manifest["counts"]["temporal_assertions"], 1)
