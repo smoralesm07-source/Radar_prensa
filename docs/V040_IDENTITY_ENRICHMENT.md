@@ -41,9 +41,17 @@ No se habilita:
 - inferencia de grupo empresarial;
 - selección arbitraria del primer resultado.
 
-## Canonicalización interna
+## Canonicalización para Entity Hub
 
-Cuando una entidad queda resuelta, Radar Prensa remapea su identificador local al identificador estable derivado del RUT utilizado por el propio productor.
+Cuando una entidad queda resuelta, Radar Prensa deja de utilizar una clave local derivada del nombre y adopta directamente la misma clave global declarada por Radar SII:
+
+`ENT-RUT-{RUT_NORMALIZADO}`
+
+Ejemplo:
+
+`76.123.456-0 -> ENT-RUT-761234560`
+
+Esta decisión permite que `FusionStore` consolide la observación de prensa y la entidad SII en el **mismo nodo del Entity Hub**, en lugar de mantener dos nodos que sólo comparten RUT.
 
 El remapeo se propaga a:
 
@@ -65,6 +73,7 @@ Cada intento contiene:
 - nombre normalizado;
 - estado `RESOLVED`, `AMBIGUOUS` o `NO_MATCH`;
 - RUT cuando corresponde;
+- `global_entity_key` cuando la resolución es positiva;
 - método de resolución;
 - radar de referencia;
 - release y digest del asset SII;
@@ -77,7 +86,7 @@ Este archivo es un producto analítico derivado de auditoría. No reemplaza evid
 
 v0.4 endurece también la extracción existente: un RUT proveniente del upstream o encontrado mediante regex sólo puede etiquetarse como `RUT_EXACT` si su dígito verificador es válido.
 
-Los RUT inválidos se descartan como identidad exacta y quedan registrados como `invalid_rut_rejected` cuando provienen de una entidad estructurada del Monitor.
+Todo RUT válido observado explícitamente utiliza inmediatamente la clave global `ENT-RUT-{RUT_NORMALIZADO}`. Los RUT inválidos se descartan como identidad exacta y quedan registrados como `invalid_rut_rejected` cuando provienen de una entidad estructurada del Monitor.
 
 ## GitHub Actions
 
@@ -110,6 +119,9 @@ Radar Prensa SOURCE_NATIVE
                           │
                           ▼
                        RUT_EXACT
+                          │
+                          ▼
+                  ENT-RUT-{RUT}
                           │
                           ▼
                      Entity Hub
