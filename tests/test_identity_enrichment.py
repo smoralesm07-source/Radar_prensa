@@ -5,6 +5,7 @@ import unittest
 from radar_prensa.entities import extract_entities
 from radar_prensa.identity_enrichment import (
     enrich_bundle_from_rows,
+    global_rut_entity_id,
     normalize_rut,
     valid_chilean_rut,
 )
@@ -16,6 +17,7 @@ class IdentityEnrichmentTests(unittest.TestCase):
         self.assertEqual(normalize_rut("76.123.456-0"), "761234560")
         self.assertTrue(valid_chilean_rut("76.123.456-0"))
         self.assertFalse(valid_chilean_rut("76.123.456-7"))
+        self.assertEqual(global_rut_entity_id("76.123.456-0"), "ENT-RUT-761234560")
 
     def test_invalid_upstream_rut_is_not_exact_identity(self):
         rows = extract_entities(
@@ -37,9 +39,27 @@ class IdentityEnrichmentTests(unittest.TestCase):
         self.assertEqual(rows[0]["identity_method"], "SOURCE_NATIVE")
         self.assertEqual(rows[0]["attributes"]["invalid_rut_rejected"], "761234567")
 
+    def test_valid_upstream_rut_uses_global_entity_key(self):
+        rows = extract_entities(
+            {
+                "nomina_entidades": [
+                    {
+                        "entidad_id": "UP-1",
+                        "nombre": "Importadora Norte SpA",
+                        "tipo": "EMPRESA",
+                        "naturaleza": "PERSONA_JURIDICA",
+                        "rut": "76.123.456-0",
+                    }
+                ]
+            },
+            "EVD-1",
+        )
+        self.assertEqual(rows[0]["entity_id"], "ENT-RUT-761234560")
+        self.assertEqual(rows[0]["identity_method"], "RUT_EXACT")
+
     def test_unique_official_name_match_promotes_and_remaps_identity(self):
         name_id = stable_id("entity:press", "Importadora Norte SpA")
-        rut_id = stable_id("entity:press", "761234560")
+        rut_id = "ENT-RUT-761234560"
         person_id = stable_id("entity:press", "Persona Uno")
         bundle = {
             "entities": [
@@ -117,6 +137,7 @@ class IdentityEnrichmentTests(unittest.TestCase):
 
         self.assertEqual(stats["resolved"], 1)
         self.assertEqual(stats["ambiguous"], 0)
+        self.assertEqual(stats["global_entity_key_policy"], "ENT-RUT-{RUT_NORMALIZADO}")
         resolved = next(row for row in bundle["entities"] if row.get("rut_normalized") == "761234560")
         self.assertEqual(resolved["entity_id"], rut_id)
         self.assertEqual(resolved["identity_method"], "RUT_EXACT")
@@ -127,6 +148,7 @@ class IdentityEnrichmentTests(unittest.TestCase):
         self.assertEqual(bundle["relationships"][0]["source_entity_id"], rut_id)
         resolution = bundle["identity_resolutions"][0]
         self.assertEqual(resolution["status"], "RESOLVED")
+        self.assertEqual(resolution["global_entity_key"], rut_id)
         self.assertEqual(resolution["reference_asset_digest"], "sha256:test")
 
     def test_ambiguous_official_name_does_not_promote(self):
@@ -155,8 +177,8 @@ class IdentityEnrichmentTests(unittest.TestCase):
         stats = enrich_bundle_from_rows(
             bundle,
             [
-                {"entity_id": "SII-1", "rut": "761234560", "legal_name": "Servicios del Norte SpA"},
-                {"entity_id": "SII-2", "rut": "765432103", "legal_name": "SERVICIOS DEL NORTE SPA"},
+                {"entity_id": "ENT-RUT-761234560", "rut": "761234560", "legal_name": "Servicios del Norte SpA"},
+                {"entity_id": "ENT-RUT-765432103", "rut": "765432103", "legal_name": "SERVICIOS DEL NORTE SPA"},
             ],
         )
         self.assertEqual(stats["resolved"], 0)
@@ -164,6 +186,7 @@ class IdentityEnrichmentTests(unittest.TestCase):
         self.assertEqual(bundle["entities"][0]["identity_method"], "SOURCE_NATIVE")
         self.assertIsNone(bundle["entities"][0]["rut_normalized"])
         self.assertEqual(bundle["identity_resolutions"][0]["status"], "AMBIGUOUS")
+        self.assertIsNone(bundle["identity_resolutions"][0]["global_entity_key"])
 
 
 if __name__ == "__main__":
