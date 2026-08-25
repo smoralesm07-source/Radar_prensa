@@ -1,5 +1,5 @@
-{"label": "valores", "producer_id": "radar_prensa", "sector_id": "sector:uaf:valores", "taxonomy": "MONITOR_UAF"}
 {"label": "abogados", "producer_id": "radar_prensa", "sector_id": "sector:uaf:abogados", "taxonomy": "MONITOR_UAF"}
+{"label": "valores", "producer_id": "radar_prensa", "sector_id": "sector:uaf:valores", "taxonomy": "MONITOR_UAF"}
 {"label": "inmobiliarias", "producer_id": "radar_prensa", "sector_id": "sector:uaf:inmobiliarias", "taxonomy": "MONITOR_UAF"}
 {"label": "notarios", "producer_id": "radar_prensa", "sector_id": "sector:uaf:notarios", "taxonomy": "MONITOR_UAF"}
 {"label": "bancos", "producer_id": "radar_prensa", "sector_id": "sector:uaf:bancos", "taxonomy": "MONITOR_UAF"}
