@@ -1,7 +1,7 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-09-05T20:26:37.287623Z",
+  "generated_at": "2026-09-05T22:57:24.659263Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 569,
@@ -9,8 +9,8 @@
     "evidence": 569,
     "entities": 3171,
     "territories": 86,
-    "entity_mentions": 8925,
-    "event_entities": 8925,
+    "entity_mentions": 8923,
+    "event_entities": 8923,
     "event_territories": 1084,
     "relationships": 794,
     "sectors": 10,
