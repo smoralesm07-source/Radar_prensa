@@ -1,6 +1,6 @@
+{"label": "bancos", "producer_id": "radar_prensa", "sector_id": "sector:uaf:bancos", "taxonomy": "MONITOR_UAF"}
 {"label": "abogados", "producer_id": "radar_prensa", "sector_id": "sector:uaf:abogados", "taxonomy": "MONITOR_UAF"}
 {"label": "remesadoras", "producer_id": "radar_prensa", "sector_id": "sector:uaf:remesadoras", "taxonomy": "MONITOR_UAF"}
-{"label": "bancos", "producer_id": "radar_prensa", "sector_id": "sector:uaf:bancos", "taxonomy": "MONITOR_UAF"}
 {"label": "casinos", "producer_id": "radar_prensa", "sector_id": "sector:uaf:casinos", "taxonomy": "MONITOR_UAF"}
 {"label": "automotoras", "producer_id": "radar_prensa", "sector_id": "sector:uaf:automotoras", "taxonomy": "MONITOR_UAF"}
 {"label": "inmobiliarias", "producer_id": "radar_prensa", "sector_id": "sector:uaf:inmobiliarias", "taxonomy": "MONITOR_UAF"}
