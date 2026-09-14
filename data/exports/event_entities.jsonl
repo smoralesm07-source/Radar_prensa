@@ -747,6 +747,17 @@
 {"entity_id": "entity:press:a88e6a80bb5487881c9fac9f", "event_id": "event:press:1a3231d1a1767c919ebb0bdd", "evidence_id": "evidence:press:0a2f4fd02a2fca3187fb8d27"}
 {"entity_id": "entity:press:ae0d4791eb49a43725f1fb44", "event_id": "event:press:1a3231d1a1767c919ebb0bdd", "evidence_id": "evidence:press:0a2f4fd02a2fca3187fb8d27"}
 {"entity_id": "entity:press:d9edd4c05294e5bd47f9c372", "event_id": "event:press:1a3231d1a1767c919ebb0bdd", "evidence_id": "evidence:press:0a2f4fd02a2fca3187fb8d27"}
+{"entity_id": "entity:press:109024766edcadf353be4edf", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:558ad9ad37cf8b1426679347", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:642107ff2732ec2ed650b5a3", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:6edcde64ed11234b4abbc0a4", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:7cb76258eae5e80e42c846ed", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:8ffe964d5dcae0ca2d5ccddc", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:a35945c9c23ce9e795681147", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:c9384843d207b08363a60e78", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:d17b889958f72f68f54a3669", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:f9b77e9f7c6b98df33fd5405", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
+{"entity_id": "entity:press:ff357e250b0066afd65a2808", "event_id": "event:press:1b811770851ffb1533d2ea11", "evidence_id": "evidence:press:f64a5271cc501ea2d2d9e8a2"}
 {"entity_id": "entity:press:0a78abc309c0d8288c1f2c3f", "event_id": "event:press:1c8218b5fb34a5b27a6543a9", "evidence_id": "evidence:press:0555acb1e1ebadf54af5c3b0"}
 {"entity_id": "entity:press:0c3fc90b47c71e2194186913", "event_id": "event:press:1c8218b5fb34a5b27a6543a9", "evidence_id": "evidence:press:0555acb1e1ebadf54af5c3b0"}
 {"entity_id": "entity:press:1318c273f6c335f635dd0060", "event_id": "event:press:1c8218b5fb34a5b27a6543a9", "evidence_id": "evidence:press:0555acb1e1ebadf54af5c3b0"}
@@ -2494,6 +2505,7 @@
 {"entity_id": "entity:press:dffd61ec8720ef788903484d", "event_id": "event:press:50afa0f8dfa1a8095b201ae9", "evidence_id": "evidence:press:468798eb2e460c4f7190a581"}
 {"entity_id": "entity:press:e0ead8dbb6c2ce38337c0562", "event_id": "event:press:50afa0f8dfa1a8095b201ae9", "evidence_id": "evidence:press:468798eb2e460c4f7190a581"}
 {"entity_id": "entity:press:f9eba761d4e1503bd692e8ae", "event_id": "event:press:50afa0f8dfa1a8095b201ae9", "evidence_id": "evidence:press:468798eb2e460c4f7190a581"}
+{"entity_id": "ENT-RUT-70819400-K", "event_id": "event:press:50c68922650748f84ae9a6c4", "evidence_id": "evidence:press:100cec5d7997c5cc64732c01"}
 {"entity_id": "entity:press:17de6f5af2e618fe8dc8d25e", "event_id": "event:press:50c68922650748f84ae9a6c4", "evidence_id": "evidence:press:100cec5d7997c5cc64732c01"}
 {"entity_id": "entity:press:185fb865a5daa8f05b4f74a2", "event_id": "event:press:50c68922650748f84ae9a6c4", "evidence_id": "evidence:press:100cec5d7997c5cc64732c01"}
 {"entity_id": "entity:press:29bb30173411b7826760083d", "event_id": "event:press:50c68922650748f84ae9a6c4", "evidence_id": "evidence:press:100cec5d7997c5cc64732c01"}
@@ -6108,6 +6120,7 @@
 {"entity_id": "entity:press:ed8e670851f0f461b0b88971", "event_id": "event:press:ba493255d3a5c9865ebf25e7", "evidence_id": "evidence:press:d917fb1827f4771a19879cc1"}
 {"entity_id": "entity:press:f59721ea1f9fbd7439e43de7", "event_id": "event:press:ba493255d3a5c9865ebf25e7", "evidence_id": "evidence:press:d917fb1827f4771a19879cc1"}
 {"entity_id": "ENT-RUT-60804000-5", "event_id": "event:press:baa8f5558209ac926c56aff7", "evidence_id": "evidence:press:7cb19718c70144fbf03b75a4"}
+{"entity_id": "ENT-RUT-70819400-K", "event_id": "event:press:baa8f5558209ac926c56aff7", "evidence_id": "evidence:press:7cb19718c70144fbf03b75a4"}
 {"entity_id": "entity:press:051c011af9eb3551ee553765", "event_id": "event:press:baa8f5558209ac926c56aff7", "evidence_id": "evidence:press:7cb19718c70144fbf03b75a4"}
 {"entity_id": "entity:press:0580b91b31b97bbeadb788da", "event_id": "event:press:baa8f5558209ac926c56aff7", "evidence_id": "evidence:press:7cb19718c70144fbf03b75a4"}
 {"entity_id": "entity:press:06edbe8710e6237db7d3ac5e", "event_id": "event:press:baa8f5558209ac926c56aff7", "evidence_id": "evidence:press:7cb19718c70144fbf03b75a4"}
@@ -7228,6 +7241,7 @@
 {"entity_id": "entity:press:d9edd4c05294e5bd47f9c372", "event_id": "event:press:da4732fb21289064531f1c05", "evidence_id": "evidence:press:8f8d778e20150c02a34a1091"}
 {"entity_id": "entity:press:e59a19b59a9f3c4bab664ee6", "event_id": "event:press:da4732fb21289064531f1c05", "evidence_id": "evidence:press:8f8d778e20150c02a34a1091"}
 {"entity_id": "entity:press:ed8e670851f0f461b0b88971", "event_id": "event:press:da4732fb21289064531f1c05", "evidence_id": "evidence:press:8f8d778e20150c02a34a1091"}
+{"entity_id": "ENT-RUT-70819400-K", "event_id": "event:press:da5c22a5102d7fa0b052b2e7", "evidence_id": "evidence:press:08f19db52efcb7e79da9ef35"}
 {"entity_id": "entity:press:8a7055af2c4de9d9954963e7", "event_id": "event:press:da5c22a5102d7fa0b052b2e7", "evidence_id": "evidence:press:08f19db52efcb7e79da9ef35"}
 {"entity_id": "entity:press:b0375c6b99fa8b7465f88330", "event_id": "event:press:da5c22a5102d7fa0b052b2e7", "evidence_id": "evidence:press:08f19db52efcb7e79da9ef35"}
 {"entity_id": "entity:press:b5ee8b1ea5489e72b3fe9b47", "event_id": "event:press:da5c22a5102d7fa0b052b2e7", "evidence_id": "evidence:press:08f19db52efcb7e79da9ef35"}
@@ -8057,6 +8071,7 @@
 {"entity_id": "entity:press:f52230325180de2952bc061a", "event_id": "event:press:f42108f504637d6ca222ffad", "evidence_id": "evidence:press:2f6e60a7604d07c874b624e0"}
 {"entity_id": "entity:press:fc220981a751288078d1278a", "event_id": "event:press:f42108f504637d6ca222ffad", "evidence_id": "evidence:press:2f6e60a7604d07c874b624e0"}
 {"entity_id": "entity:press:fe1970a8f56586e18f46f4a8", "event_id": "event:press:f42108f504637d6ca222ffad", "evidence_id": "evidence:press:2f6e60a7604d07c874b624e0"}
+{"entity_id": "ENT-RUT-70819400-K", "event_id": "event:press:f52a3b6ff94873a912141ef2", "evidence_id": "evidence:press:fc8f5ef21df977c5987ed053"}
 {"entity_id": "entity:press:093714e0eab445308d326420", "event_id": "event:press:f52a3b6ff94873a912141ef2", "evidence_id": "evidence:press:fc8f5ef21df977c5987ed053"}
 {"entity_id": "entity:press:109024766edcadf353be4edf", "event_id": "event:press:f52a3b6ff94873a912141ef2", "evidence_id": "evidence:press:fc8f5ef21df977c5987ed053"}
 {"entity_id": "entity:press:1852cff3c0d5ac8c85b941e7", "event_id": "event:press:f52a3b6ff94873a912141ef2", "evidence_id": "evidence:press:fc8f5ef21df977c5987ed053"}
@@ -8237,6 +8252,7 @@
 {"entity_id": "entity:press:af995f6b388a8e211c609c59", "event_id": "event:press:f92b8b5fde1b0ab0dd720c80", "evidence_id": "evidence:press:9c3c97be6ccc8b239b782d86"}
 {"entity_id": "entity:press:c0486f309b61b231e83c1511", "event_id": "event:press:f92b8b5fde1b0ab0dd720c80", "evidence_id": "evidence:press:9c3c97be6ccc8b239b782d86"}
 {"entity_id": "entity:press:cc8cdce28d58f5242d7b45ea", "event_id": "event:press:f92b8b5fde1b0ab0dd720c80", "evidence_id": "evidence:press:9c3c97be6ccc8b239b782d86"}
+{"entity_id": "ENT-RUT-70819400-K", "event_id": "event:press:f93fdc54c45fd256d6ca1470", "evidence_id": "evidence:press:00a553980cd25d73b5f3b48c"}
 {"entity_id": "entity:press:2282708888a04b8f590ceaa3", "event_id": "event:press:f93fdc54c45fd256d6ca1470", "evidence_id": "evidence:press:00a553980cd25d73b5f3b48c"}
 {"entity_id": "entity:press:2f4d92b08946cc66721ce15b", "event_id": "event:press:f93fdc54c45fd256d6ca1470", "evidence_id": "evidence:press:00a553980cd25d73b5f3b48c"}
 {"entity_id": "entity:press:558ad9ad37cf8b1426679347", "event_id": "event:press:f93fdc54c45fd256d6ca1470", "evidence_id": "evidence:press:00a553980cd25d73b5f3b48c"}
@@ -8383,6 +8399,7 @@
 {"entity_id": "entity:press:d11f15c60f19f0a0235b5494", "event_id": "event:press:fe374a6c99e006f4170416d1", "evidence_id": "evidence:press:48dd4a50f1fa5ecf4d638dc3"}
 {"entity_id": "entity:press:eab314ff79ebc26116e2ac5e", "event_id": "event:press:fe374a6c99e006f4170416d1", "evidence_id": "evidence:press:48dd4a50f1fa5ecf4d638dc3"}
 {"entity_id": "entity:press:ed8e670851f0f461b0b88971", "event_id": "event:press:fe374a6c99e006f4170416d1", "evidence_id": "evidence:press:48dd4a50f1fa5ecf4d638dc3"}
+{"entity_id": "ENT-RUT-70819400-K", "event_id": "event:press:ff5e4e5f5c3fa71d8669524b", "evidence_id": "evidence:press:d7ebe0132d6d2326343f292c"}
 {"entity_id": "entity:press:1318c273f6c335f635dd0060", "event_id": "event:press:ff5e4e5f5c3fa71d8669524b", "evidence_id": "evidence:press:d7ebe0132d6d2326343f292c"}
 {"entity_id": "entity:press:4db85f447d03b435c0a252d5", "event_id": "event:press:ff5e4e5f5c3fa71d8669524b", "evidence_id": "evidence:press:d7ebe0132d6d2326343f292c"}
 {"entity_id": "entity:press:4f67642c07d4c8a3e42a4d92", "event_id": "event:press:ff5e4e5f5c3fa71d8669524b", "evidence_id": "evidence:press:d7ebe0132d6d2326343f292c"}
