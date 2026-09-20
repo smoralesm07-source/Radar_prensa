@@ -1,7 +1,7 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-09-19T23:11:22.299436Z",
+  "generated_at": "2026-09-20T04:58:47.094216Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 393,
@@ -9,8 +9,8 @@
     "evidence": 393,
     "entities": 2534,
     "territories": 86,
-    "entity_mentions": 6241,
-    "event_entities": 6241,
+    "entity_mentions": 6242,
+    "event_entities": 6242,
     "event_territories": 680,
     "relationships": 514,
     "sectors": 10,
@@ -74,11 +74,11 @@
       "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
       "attempted": 778,
-      "resolved": 36,
+      "resolved": 37,
       "ambiguous": 10,
-      "no_match": 732,
+      "no_match": 731,
       "invalid_existing_rut_rejected": 0,
-      "rut_exact_entities_after": 36,
+      "rut_exact_entities_after": 37,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
     }
   },
@@ -90,11 +90,11 @@
     "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
     "attempted": 778,
-    "resolved": 36,
+    "resolved": 37,
     "ambiguous": 10,
-    "no_match": 732,
+    "no_match": 731,
     "invalid_existing_rut_rejected": 0,
-    "rut_exact_entities_after": 36,
+    "rut_exact_entities_after": 37,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
   },
   "analysis": {
