@@ -1,7 +1,7 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-09-27T05:24:13.595242Z",
+  "generated_at": "2026-09-27T12:09:11.053253Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 327,
