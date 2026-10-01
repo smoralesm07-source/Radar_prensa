@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-01T10:14:38.786673Z",
+  "generated_at": "2026-10-01T18:27:25.038735Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 339,
-    "events": 339,
-    "evidence": 339,
-    "entities": 2220,
-    "territories": 82,
-    "entity_mentions": 5837,
-    "event_entities": 5837,
-    "event_territories": 653,
+    "documents": 351,
+    "events": 351,
+    "evidence": 351,
+    "entities": 2283,
+    "territories": 83,
+    "entity_mentions": 6088,
+    "event_entities": 6088,
+    "event_territories": 667,
     "relationships": 422,
     "sectors": 11,
-    "temporal_assertions": 123,
-    "identity_resolutions": 653,
-    "entity_activity": 2220,
-    "phenomenon_windows": 29,
-    "territorial_windows": 331,
-    "event_clusters": 212,
-    "signals": 634,
-    "longitudinal_signals": 248
+    "temporal_assertions": 126,
+    "identity_resolutions": 678,
+    "entity_activity": 2283,
+    "phenomenon_windows": 30,
+    "territorial_windows": 349,
+    "event_clusters": 217,
+    "signals": 649,
+    "longitudinal_signals": 252
   },
   "quality": {
     "geography_catalog": {
@@ -29,17 +29,17 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 205,
-    "territorial_coverage_pct": 60.47,
-    "events_with_occurrence_time": 123,
-    "occurrence_time_coverage_pct": 36.28,
+    "events_with_territory": 212,
+    "territorial_coverage_pct": 60.4,
+    "events_with_occurrence_time": 126,
+    "occurrence_time_coverage_pct": 35.9,
     "temporal_precision": {
       "EXACT": 21,
       "INFERRED_DAY": 28,
-      "MONTH": 31,
-      "UNKNOWN": 216,
+      "MONTH": 33,
+      "UNKNOWN": 225,
       "YEAR": 35,
-      "YEAR_RANGE": 8
+      "YEAR_RANGE": 9
     },
     "longitudinal": {
       "analysis_window": {
@@ -54,17 +54,17 @@
         "baseline_observed_days": 23,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 2220,
-      "recurrent_entities": 219,
-      "phenomenon_windows": 29,
-      "territorial_windows": 331,
-      "event_clusters": 212,
-      "longitudinal_signal_count": 248,
+      "entity_activity_profiles": 2283,
+      "recurrent_entities": 222,
+      "phenomenon_windows": 30,
+      "territorial_windows": 349,
+      "event_clusters": 217,
+      "longitudinal_signal_count": 252,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 137,
-        "ENTITY_RECURRENCE": 75,
+        "CROSS_SOURCE_EVENT_CLUSTER": 141,
+        "ENTITY_RECURRENCE": 74,
         "PHENOMENON_MOMENTUM": 1,
-        "TERRITORIAL_MOMENTUM": 35
+        "TERRITORIAL_MOMENTUM": 36
       }
     },
     "identity_enrichment": {
@@ -74,12 +74,12 @@
       "reference_release_tag": "fusion-v1",
       "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-      "attempted": 653,
-      "resolved": 24,
+      "attempted": 678,
+      "resolved": 23,
       "ambiguous": 12,
-      "no_match": 617,
+      "no_match": 643,
       "invalid_existing_rut_rejected": 0,
-      "rut_exact_entities_after": 24,
+      "rut_exact_entities_after": 23,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
     }
   },
@@ -90,12 +90,12 @@
     "reference_release_tag": "fusion-v1",
     "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-    "attempted": 653,
-    "resolved": 24,
+    "attempted": 678,
+    "resolved": 23,
     "ambiguous": 12,
-    "no_match": 617,
+    "no_match": 643,
     "invalid_existing_rut_rejected": 0,
-    "rut_exact_entities_after": 24,
+    "rut_exact_entities_after": 23,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
   },
   "analysis": {
