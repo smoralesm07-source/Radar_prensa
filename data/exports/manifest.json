@@ -1,7 +1,7 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-01T18:27:25.038735Z",
+  "generated_at": "2026-10-02T00:51:03.049019Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 351,
@@ -9,8 +9,8 @@
     "evidence": 351,
     "entities": 2283,
     "territories": 83,
-    "entity_mentions": 6088,
-    "event_entities": 6088,
+    "entity_mentions": 6087,
+    "event_entities": 6087,
     "event_territories": 667,
     "relationships": 422,
     "sectors": 11,
@@ -20,8 +20,8 @@
     "phenomenon_windows": 30,
     "territorial_windows": 349,
     "event_clusters": 217,
-    "signals": 649,
-    "longitudinal_signals": 252
+    "signals": 648,
+    "longitudinal_signals": 251
   },
   "quality": {
     "geography_catalog": {
@@ -59,9 +59,9 @@
       "phenomenon_windows": 30,
       "territorial_windows": 349,
       "event_clusters": 217,
-      "longitudinal_signal_count": 252,
+      "longitudinal_signal_count": 251,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 141,
+        "CROSS_SOURCE_EVENT_CLUSTER": 140,
         "ENTITY_RECURRENCE": 74,
         "PHENOMENON_MOMENTUM": 1,
         "TERRITORIAL_MOMENTUM": 36
@@ -75,11 +75,11 @@
       "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
       "attempted": 678,
-      "resolved": 23,
+      "resolved": 24,
       "ambiguous": 12,
-      "no_match": 643,
+      "no_match": 642,
       "invalid_existing_rut_rejected": 0,
-      "rut_exact_entities_after": 23,
+      "rut_exact_entities_after": 24,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
     }
   },
@@ -91,11 +91,11 @@
     "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
     "attempted": 678,
-    "resolved": 23,
+    "resolved": 24,
     "ambiguous": 12,
-    "no_match": 643,
+    "no_match": 642,
     "invalid_existing_rut_rejected": 0,
-    "rut_exact_entities_after": 23,
+    "rut_exact_entities_after": 24,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
   },
   "analysis": {
