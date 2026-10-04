@@ -1,7 +1,7 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-04T18:39:33.131707Z",
+  "generated_at": "2026-10-04T23:58:35.222194Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 324,
@@ -9,8 +9,8 @@
     "evidence": 324,
     "entities": 2075,
     "territories": 79,
-    "entity_mentions": 5467,
-    "event_entities": 5467,
+    "entity_mentions": 5472,
+    "event_entities": 5472,
     "event_territories": 560,
     "relationships": 398,
     "sectors": 11,
@@ -19,9 +19,9 @@
     "entity_activity": 2075,
     "phenomenon_windows": 31,
     "territorial_windows": 331,
-    "event_clusters": 195,
-    "signals": 631,
-    "longitudinal_signals": 241
+    "event_clusters": 196,
+    "signals": 633,
+    "longitudinal_signals": 243
   },
   "quality": {
     "geography_catalog": {
@@ -55,14 +55,14 @@
         "baseline_quality": "PARTIAL"
       },
       "entity_activity_profiles": 2075,
-      "recurrent_entities": 205,
+      "recurrent_entities": 206,
       "phenomenon_windows": 31,
       "territorial_windows": 331,
-      "event_clusters": 195,
-      "longitudinal_signal_count": 241,
+      "event_clusters": 196,
+      "longitudinal_signal_count": 243,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 129,
-        "ENTITY_RECURRENCE": 70,
+        "CROSS_SOURCE_EVENT_CLUSTER": 130,
+        "ENTITY_RECURRENCE": 71,
         "PHENOMENON_MOMENTUM": 3,
         "TERRITORIAL_MOMENTUM": 39
       }
