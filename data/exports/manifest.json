@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-05T05:49:08.321749Z",
+  "generated_at": "2026-10-05T14:50:52.583968Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 325,
-    "events": 325,
-    "evidence": 325,
-    "entities": 2081,
+    "documents": 323,
+    "events": 323,
+    "evidence": 323,
+    "entities": 2058,
     "territories": 79,
-    "entity_mentions": 5487,
-    "event_entities": 5487,
+    "entity_mentions": 5459,
+    "event_entities": 5459,
     "event_territories": 560,
     "relationships": 398,
     "sectors": 11,
     "temporal_assertions": 113,
-    "identity_resolutions": 627,
-    "entity_activity": 2081,
+    "identity_resolutions": 619,
+    "entity_activity": 2058,
     "phenomenon_windows": 30,
     "territorial_windows": 331,
     "event_clusters": 194,
-    "signals": 629,
-    "longitudinal_signals": 240
+    "signals": 628,
+    "longitudinal_signals": 239
   },
   "quality": {
     "geography_catalog": {
@@ -30,41 +30,41 @@
       "communes": 346
     },
     "events_with_territory": 187,
-    "territorial_coverage_pct": 57.54,
+    "territorial_coverage_pct": 57.89,
     "events_with_occurrence_time": 113,
-    "occurrence_time_coverage_pct": 34.77,
+    "occurrence_time_coverage_pct": 34.98,
     "temporal_precision": {
       "EXACT": 14,
       "INFERRED_DAY": 23,
       "MONTH": 30,
-      "UNKNOWN": 212,
+      "UNKNOWN": 210,
       "YEAR": 39,
       "YEAR_RANGE": 7
     },
     "longitudinal": {
       "analysis_window": {
         "time_basis": "PUBLICATION_DATE",
-        "dataset_start": "2026-09-05",
+        "dataset_start": "2026-09-07",
         "anchor_date": "2026-10-04",
         "recent_from": "2026-09-28",
         "recent_to": "2026-10-04",
         "baseline_from": "2026-08-31",
         "baseline_to": "2026-09-27",
-        "baseline_observed_from": "2026-09-05",
-        "baseline_observed_days": 23,
+        "baseline_observed_from": "2026-09-07",
+        "baseline_observed_days": 21,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 2081,
+      "entity_activity_profiles": 2058,
       "recurrent_entities": 207,
       "phenomenon_windows": 30,
       "territorial_windows": 331,
       "event_clusters": 194,
-      "longitudinal_signal_count": 240,
+      "longitudinal_signal_count": 239,
       "longitudinal_signal_types": {
         "CROSS_SOURCE_EVENT_CLUSTER": 128,
         "ENTITY_RECURRENCE": 70,
         "PHENOMENON_MOMENTUM": 3,
-        "TERRITORIAL_MOMENTUM": 39
+        "TERRITORIAL_MOMENTUM": 38
       }
     },
     "identity_enrichment": {
@@ -74,10 +74,10 @@
       "reference_release_tag": "fusion-v1",
       "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-      "attempted": 627,
+      "attempted": 619,
       "resolved": 21,
       "ambiguous": 11,
-      "no_match": 595,
+      "no_match": 587,
       "invalid_existing_rut_rejected": 0,
       "rut_exact_entities_after": 21,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
@@ -90,10 +90,10 @@
     "reference_release_tag": "fusion-v1",
     "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-    "attempted": 627,
+    "attempted": 619,
     "resolved": 21,
     "ambiguous": 11,
-    "no_match": 595,
+    "no_match": 587,
     "invalid_existing_rut_rejected": 0,
     "rut_exact_entities_after": 21,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
@@ -126,14 +126,14 @@
     },
     "analysis_window": {
       "time_basis": "PUBLICATION_DATE",
-      "dataset_start": "2026-09-05",
+      "dataset_start": "2026-09-07",
       "anchor_date": "2026-10-04",
       "recent_from": "2026-09-28",
       "recent_to": "2026-10-04",
       "baseline_from": "2026-08-31",
       "baseline_to": "2026-09-27",
-      "baseline_observed_from": "2026-09-05",
-      "baseline_observed_days": 23,
+      "baseline_observed_from": "2026-09-07",
+      "baseline_observed_days": 21,
       "baseline_quality": "PARTIAL"
     }
   },
