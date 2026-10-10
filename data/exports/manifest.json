@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-10T09:56:45.062748Z",
+  "generated_at": "2026-10-10T17:22:09.559403Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 309,
-    "events": 309,
-    "evidence": 309,
-    "entities": 2110,
-    "territories": 79,
-    "entity_mentions": 5260,
-    "event_entities": 5260,
-    "event_territories": 538,
+    "documents": 311,
+    "events": 311,
+    "evidence": 311,
+    "entities": 2112,
+    "territories": 80,
+    "entity_mentions": 5282,
+    "event_entities": 5282,
+    "event_territories": 542,
     "relationships": 326,
     "sectors": 9,
     "temporal_assertions": 108,
     "identity_resolutions": 670,
-    "entity_activity": 2110,
-    "phenomenon_windows": 32,
+    "entity_activity": 2112,
+    "phenomenon_windows": 33,
     "territorial_windows": 324,
-    "event_clusters": 181,
-    "signals": 572,
-    "longitudinal_signals": 191
+    "event_clusters": 182,
+    "signals": 578,
+    "longitudinal_signals": 195
   },
   "quality": {
     "geography_catalog": {
@@ -29,15 +29,15 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 175,
-    "territorial_coverage_pct": 56.63,
+    "events_with_territory": 177,
+    "territorial_coverage_pct": 56.91,
     "events_with_occurrence_time": 108,
-    "occurrence_time_coverage_pct": 34.95,
+    "occurrence_time_coverage_pct": 34.73,
     "temporal_precision": {
       "EXACT": 19,
       "INFERRED_DAY": 17,
       "MONTH": 30,
-      "UNKNOWN": 201,
+      "UNKNOWN": 203,
       "YEAR": 32,
       "YEAR_RANGE": 10
     },
@@ -54,16 +54,16 @@
         "baseline_observed_days": 23,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 2110,
+      "entity_activity_profiles": 2112,
       "recurrent_entities": 203,
-      "phenomenon_windows": 32,
+      "phenomenon_windows": 33,
       "territorial_windows": 324,
-      "event_clusters": 181,
-      "longitudinal_signal_count": 191,
+      "event_clusters": 182,
+      "longitudinal_signal_count": 195,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 118,
+        "CROSS_SOURCE_EVENT_CLUSTER": 119,
         "ENTITY_RECURRENCE": 67,
-        "TERRITORIAL_MOMENTUM": 6
+        "TERRITORIAL_MOMENTUM": 9
       }
     },
     "identity_enrichment": {
