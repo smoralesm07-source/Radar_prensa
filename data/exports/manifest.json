@@ -1,7 +1,7 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-12T10:59:57.977454Z",
+  "generated_at": "2026-10-12T21:18:15.368680Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 286,
@@ -71,7 +71,7 @@
       "method": "SII_UNIQUE_NORMALIZED_LEGAL_NAME",
       "reference_radar_id": "RADAR_SII",
       "reference_release_tag": "fusion-v1",
-      "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
+      "reference_asset_digest": "sha256:1d140d428ecb39d73c867a0c1afe242d6aad8154e80597ae2a7b1b16aa94519b",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
       "attempted": 636,
       "resolved": 28,
@@ -87,7 +87,7 @@
     "method": "SII_UNIQUE_NORMALIZED_LEGAL_NAME",
     "reference_radar_id": "RADAR_SII",
     "reference_release_tag": "fusion-v1",
-    "reference_asset_digest": "sha256:99fd02e0b778a6ff0b218768490da1b11f9382417477a7d7d1f02b056e070a2f",
+    "reference_asset_digest": "sha256:1d140d428ecb39d73c867a0c1afe242d6aad8154e80597ae2a7b1b16aa94519b",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
     "attempted": 636,
     "resolved": 28,
