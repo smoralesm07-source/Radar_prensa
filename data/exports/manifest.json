@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-19T13:28:51.877210Z",
+  "generated_at": "2026-10-19T20:36:55.205020Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 267,
-    "events": 267,
-    "evidence": 267,
-    "entities": 1770,
+    "documents": 270,
+    "events": 270,
+    "evidence": 270,
+    "entities": 1771,
     "territories": 78,
-    "entity_mentions": 4346,
-    "event_entities": 4346,
-    "event_territories": 489,
-    "relationships": 194,
+    "entity_mentions": 4355,
+    "event_entities": 4355,
+    "event_territories": 495,
+    "relationships": 198,
     "sectors": 9,
-    "temporal_assertions": 98,
+    "temporal_assertions": 99,
     "identity_resolutions": 593,
-    "entity_activity": 1770,
+    "entity_activity": 1771,
     "phenomenon_windows": 35,
     "territorial_windows": 309,
-    "event_clusters": 141,
-    "signals": 500,
-    "longitudinal_signals": 138
+    "event_clusters": 142,
+    "signals": 508,
+    "longitudinal_signals": 142
   },
   "quality": {
     "geography_catalog": {
@@ -29,15 +29,15 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 170,
-    "territorial_coverage_pct": 63.67,
-    "events_with_occurrence_time": 98,
-    "occurrence_time_coverage_pct": 36.7,
+    "events_with_territory": 173,
+    "territorial_coverage_pct": 64.07,
+    "events_with_occurrence_time": 99,
+    "occurrence_time_coverage_pct": 36.67,
     "temporal_precision": {
       "EXACT": 18,
-      "INFERRED_DAY": 12,
+      "INFERRED_DAY": 13,
       "MONTH": 25,
-      "UNKNOWN": 169,
+      "UNKNOWN": 171,
       "YEAR": 36,
       "YEAR_RANGE": 7
     },
@@ -54,16 +54,16 @@
         "baseline_observed_days": 23,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 1770,
-      "recurrent_entities": 152,
+      "entity_activity_profiles": 1771,
+      "recurrent_entities": 154,
       "phenomenon_windows": 35,
       "territorial_windows": 309,
-      "event_clusters": 141,
-      "longitudinal_signal_count": 138,
+      "event_clusters": 142,
+      "longitudinal_signal_count": 142,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 83,
-        "ENTITY_RECURRENCE": 43,
-        "TERRITORIAL_MOMENTUM": 12
+        "CROSS_SOURCE_EVENT_CLUSTER": 82,
+        "ENTITY_RECURRENCE": 44,
+        "TERRITORIAL_MOMENTUM": 16
       }
     },
     "identity_enrichment": {
@@ -74,11 +74,11 @@
       "reference_asset_digest": "sha256:1d140d428ecb39d73c867a0c1afe242d6aad8154e80597ae2a7b1b16aa94519b",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
       "attempted": 593,
-      "resolved": 28,
+      "resolved": 27,
       "ambiguous": 9,
-      "no_match": 556,
+      "no_match": 557,
       "invalid_existing_rut_rejected": 0,
-      "rut_exact_entities_after": 28,
+      "rut_exact_entities_after": 27,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
     }
   },
@@ -90,11 +90,11 @@
     "reference_asset_digest": "sha256:1d140d428ecb39d73c867a0c1afe242d6aad8154e80597ae2a7b1b16aa94519b",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
     "attempted": 593,
-    "resolved": 28,
+    "resolved": 27,
     "ambiguous": 9,
-    "no_match": 556,
+    "no_match": 557,
     "invalid_existing_rut_rejected": 0,
-    "rut_exact_entities_after": 28,
+    "rut_exact_entities_after": 27,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
   },
   "analysis": {
