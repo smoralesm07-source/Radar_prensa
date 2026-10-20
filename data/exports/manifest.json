@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-20T00:24:53.304575Z",
+  "generated_at": "2026-10-20T08:39:04.560819Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 272,
-    "events": 272,
-    "evidence": 272,
-    "entities": 1787,
+    "documents": 273,
+    "events": 273,
+    "evidence": 273,
+    "entities": 1788,
     "territories": 78,
-    "entity_mentions": 4393,
-    "event_entities": 4393,
-    "event_territories": 500,
+    "entity_mentions": 4402,
+    "event_entities": 4402,
+    "event_territories": 504,
     "relationships": 198,
     "sectors": 9,
-    "temporal_assertions": 101,
+    "temporal_assertions": 102,
     "identity_resolutions": 595,
-    "entity_activity": 1787,
+    "entity_activity": 1788,
     "phenomenon_windows": 35,
     "territorial_windows": 310,
     "event_clusters": 143,
-    "signals": 512,
-    "longitudinal_signals": 143
+    "signals": 518,
+    "longitudinal_signals": 147
   },
   "quality": {
     "geography_catalog": {
@@ -29,13 +29,13 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 175,
-    "territorial_coverage_pct": 64.34,
-    "events_with_occurrence_time": 101,
-    "occurrence_time_coverage_pct": 37.13,
+    "events_with_territory": 177,
+    "territorial_coverage_pct": 64.84,
+    "events_with_occurrence_time": 102,
+    "occurrence_time_coverage_pct": 37.36,
     "temporal_precision": {
       "EXACT": 18,
-      "INFERRED_DAY": 15,
+      "INFERRED_DAY": 16,
       "MONTH": 25,
       "UNKNOWN": 171,
       "YEAR": 36,
@@ -44,26 +44,26 @@
     "longitudinal": {
       "analysis_window": {
         "time_basis": "PUBLICATION_DATE",
-        "dataset_start": "2026-09-20",
+        "dataset_start": "2026-09-21",
         "anchor_date": "2026-10-19",
         "recent_from": "2026-10-13",
         "recent_to": "2026-10-19",
         "baseline_from": "2026-09-15",
         "baseline_to": "2026-10-12",
-        "baseline_observed_from": "2026-09-20",
-        "baseline_observed_days": 23,
+        "baseline_observed_from": "2026-09-21",
+        "baseline_observed_days": 22,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 1787,
-      "recurrent_entities": 157,
+      "entity_activity_profiles": 1788,
+      "recurrent_entities": 158,
       "phenomenon_windows": 35,
       "territorial_windows": 310,
       "event_clusters": 143,
-      "longitudinal_signal_count": 143,
+      "longitudinal_signal_count": 147,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 83,
-        "ENTITY_RECURRENCE": 44,
-        "TERRITORIAL_MOMENTUM": 16
+        "CROSS_SOURCE_EVENT_CLUSTER": 84,
+        "ENTITY_RECURRENCE": 45,
+        "TERRITORIAL_MOMENTUM": 18
       }
     },
     "identity_enrichment": {
@@ -125,14 +125,14 @@
     },
     "analysis_window": {
       "time_basis": "PUBLICATION_DATE",
-      "dataset_start": "2026-09-20",
+      "dataset_start": "2026-09-21",
       "anchor_date": "2026-10-19",
       "recent_from": "2026-10-13",
       "recent_to": "2026-10-19",
       "baseline_from": "2026-09-15",
       "baseline_to": "2026-10-12",
-      "baseline_observed_from": "2026-09-20",
-      "baseline_observed_days": 23,
+      "baseline_observed_from": "2026-09-21",
+      "baseline_observed_days": 22,
       "baseline_quality": "PARTIAL"
     }
   },
