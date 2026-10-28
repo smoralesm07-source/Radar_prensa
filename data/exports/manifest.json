@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-10-28T13:05:22.284810Z",
+  "generated_at": "2026-10-28T20:20:03.648747Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 304,
-    "events": 304,
-    "evidence": 304,
-    "entities": 1926,
-    "territories": 72,
-    "entity_mentions": 4686,
-    "event_entities": 4686,
-    "event_territories": 458,
-    "relationships": 212,
+    "documents": 341,
+    "events": 341,
+    "evidence": 341,
+    "entities": 2070,
+    "territories": 74,
+    "entity_mentions": 5427,
+    "event_entities": 5427,
+    "event_territories": 480,
+    "relationships": 244,
     "sectors": 8,
-    "temporal_assertions": 124,
-    "identity_resolutions": 651,
-    "entity_activity": 1926,
-    "phenomenon_windows": 37,
-    "territorial_windows": 314,
-    "event_clusters": 141,
-    "signals": 541,
-    "longitudinal_signals": 156
+    "temporal_assertions": 137,
+    "identity_resolutions": 688,
+    "entity_activity": 2070,
+    "phenomenon_windows": 36,
+    "territorial_windows": 326,
+    "event_clusters": 153,
+    "signals": 584,
+    "longitudinal_signals": 176
   },
   "quality": {
     "geography_catalog": {
@@ -29,17 +29,17 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 174,
-    "territorial_coverage_pct": 57.24,
-    "events_with_occurrence_time": 124,
-    "occurrence_time_coverage_pct": 40.79,
+    "events_with_territory": 180,
+    "territorial_coverage_pct": 52.79,
+    "events_with_occurrence_time": 137,
+    "occurrence_time_coverage_pct": 40.18,
     "temporal_precision": {
-      "EXACT": 19,
-      "INFERRED_DAY": 17,
-      "MONTH": 29,
-      "UNKNOWN": 180,
-      "YEAR": 46,
-      "YEAR_RANGE": 13
+      "EXACT": 20,
+      "INFERRED_DAY": 22,
+      "MONTH": 32,
+      "UNKNOWN": 204,
+      "YEAR": 49,
+      "YEAR_RANGE": 14
     },
     "longitudinal": {
       "analysis_window": {
@@ -54,17 +54,17 @@
         "baseline_observed_days": 23,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 1926,
-      "recurrent_entities": 163,
-      "phenomenon_windows": 37,
-      "territorial_windows": 314,
-      "event_clusters": 141,
-      "longitudinal_signal_count": 156,
+      "entity_activity_profiles": 2070,
+      "recurrent_entities": 187,
+      "phenomenon_windows": 36,
+      "territorial_windows": 326,
+      "event_clusters": 153,
+      "longitudinal_signal_count": 176,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 87,
-        "ENTITY_RECURRENCE": 50,
-        "PHENOMENON_MOMENTUM": 1,
-        "TERRITORIAL_MOMENTUM": 18
+        "CROSS_SOURCE_EVENT_CLUSTER": 94,
+        "ENTITY_RECURRENCE": 51,
+        "PHENOMENON_MOMENTUM": 5,
+        "TERRITORIAL_MOMENTUM": 26
       }
     },
     "identity_enrichment": {
@@ -74,12 +74,12 @@
       "reference_release_tag": "fusion-v1",
       "reference_asset_digest": "sha256:1d140d428ecb39d73c867a0c1afe242d6aad8154e80597ae2a7b1b16aa94519b",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-      "attempted": 651,
-      "resolved": 31,
+      "attempted": 688,
+      "resolved": 33,
       "ambiguous": 6,
-      "no_match": 614,
+      "no_match": 649,
       "invalid_existing_rut_rejected": 0,
-      "rut_exact_entities_after": 31,
+      "rut_exact_entities_after": 33,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
     }
   },
@@ -90,12 +90,12 @@
     "reference_release_tag": "fusion-v1",
     "reference_asset_digest": "sha256:1d140d428ecb39d73c867a0c1afe242d6aad8154e80597ae2a7b1b16aa94519b",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-    "attempted": 651,
-    "resolved": 31,
+    "attempted": 688,
+    "resolved": 33,
     "ambiguous": 6,
-    "no_match": 614,
+    "no_match": 649,
     "invalid_existing_rut_rejected": 0,
-    "rut_exact_entities_after": 31,
+    "rut_exact_entities_after": 33,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
   },
   "analysis": {
