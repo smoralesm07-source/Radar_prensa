@@ -6,4 +6,3 @@
 {"label": "remesadoras", "producer_id": "radar_prensa", "sector_id": "sector:uaf:remesadoras", "taxonomy": "MONITOR_UAF"}
 {"label": "contadores", "producer_id": "radar_prensa", "sector_id": "sector:uaf:contadores", "taxonomy": "MONITOR_UAF"}
 {"label": "notarios", "producer_id": "radar_prensa", "sector_id": "sector:uaf:notarios", "taxonomy": "MONITOR_UAF"}
-{"label": "automotoras", "producer_id": "radar_prensa", "sector_id": "sector:uaf:automotoras", "taxonomy": "MONITOR_UAF"}
