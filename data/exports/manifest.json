@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-11-14T22:31:40.485688Z",
+  "generated_at": "2026-11-15T06:43:29.517661Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 324,
-    "events": 324,
-    "evidence": 324,
-    "entities": 2100,
+    "documents": 325,
+    "events": 325,
+    "evidence": 325,
+    "entities": 2111,
     "territories": 62,
-    "entity_mentions": 5462,
-    "event_entities": 5462,
+    "entity_mentions": 5469,
+    "event_entities": 5469,
     "event_territories": 357,
     "relationships": 190,
     "sectors": 9,
     "temporal_assertions": 114,
-    "identity_resolutions": 642,
-    "entity_activity": 2100,
+    "identity_resolutions": 645,
+    "entity_activity": 2111,
     "phenomenon_windows": 38,
     "territorial_windows": 274,
-    "event_clusters": 142,
+    "event_clusters": 143,
     "signals": 486,
-    "longitudinal_signals": 144
+    "longitudinal_signals": 142
   },
   "quality": {
     "geography_catalog": {
@@ -30,14 +30,14 @@
       "communes": 346
     },
     "events_with_territory": 135,
-    "territorial_coverage_pct": 41.67,
+    "territorial_coverage_pct": 41.54,
     "events_with_occurrence_time": 114,
-    "occurrence_time_coverage_pct": 35.19,
+    "occurrence_time_coverage_pct": 35.08,
     "temporal_precision": {
       "EXACT": 8,
       "INFERRED_DAY": 27,
       "MONTH": 27,
-      "UNKNOWN": 210,
+      "UNKNOWN": 211,
       "YEAR": 35,
       "YEAR_RANGE": 17
     },
@@ -54,15 +54,15 @@
         "baseline_observed_days": 23,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 2100,
-      "recurrent_entities": 191,
+      "entity_activity_profiles": 2111,
+      "recurrent_entities": 190,
       "phenomenon_windows": 38,
       "territorial_windows": 274,
-      "event_clusters": 142,
-      "longitudinal_signal_count": 144,
+      "event_clusters": 143,
+      "longitudinal_signal_count": 142,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 88,
-        "ENTITY_RECURRENCE": 56
+        "CROSS_SOURCE_EVENT_CLUSTER": 87,
+        "ENTITY_RECURRENCE": 55
       }
     },
     "identity_enrichment": {
@@ -72,10 +72,10 @@
       "reference_release_tag": "fusion-v1",
       "reference_asset_digest": "sha256:af79374bebe39e2fd68476ca2b3d9a15b9d39e59671744b95e685c664db01308",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-      "attempted": 642,
+      "attempted": 645,
       "resolved": 27,
       "ambiguous": 9,
-      "no_match": 606,
+      "no_match": 609,
       "invalid_existing_rut_rejected": 0,
       "rut_exact_entities_after": 27,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
@@ -88,10 +88,10 @@
     "reference_release_tag": "fusion-v1",
     "reference_asset_digest": "sha256:af79374bebe39e2fd68476ca2b3d9a15b9d39e59671744b95e685c664db01308",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-    "attempted": 642,
+    "attempted": 645,
     "resolved": 27,
     "ambiguous": 9,
-    "no_match": 606,
+    "no_match": 609,
     "invalid_existing_rut_rejected": 0,
     "rut_exact_entities_after": 27,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
