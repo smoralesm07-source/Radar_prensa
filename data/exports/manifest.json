@@ -1,27 +1,27 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-11-15T06:43:29.517661Z",
+  "generated_at": "2026-11-15T16:24:57.329781Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
-    "documents": 325,
-    "events": 325,
-    "evidence": 325,
-    "entities": 2111,
-    "territories": 62,
-    "entity_mentions": 5469,
-    "event_entities": 5469,
-    "event_territories": 357,
+    "documents": 323,
+    "events": 323,
+    "evidence": 323,
+    "entities": 2138,
+    "territories": 61,
+    "entity_mentions": 5491,
+    "event_entities": 5491,
+    "event_territories": 353,
     "relationships": 190,
     "sectors": 9,
-    "temporal_assertions": 114,
-    "identity_resolutions": 645,
-    "entity_activity": 2111,
-    "phenomenon_windows": 38,
+    "temporal_assertions": 112,
+    "identity_resolutions": 679,
+    "entity_activity": 2138,
+    "phenomenon_windows": 37,
     "territorial_windows": 274,
-    "event_clusters": 143,
+    "event_clusters": 145,
     "signals": 486,
-    "longitudinal_signals": 142
+    "longitudinal_signals": 144
   },
   "quality": {
     "geography_catalog": {
@@ -29,40 +29,40 @@
       "provinces": 56,
       "communes": 346
     },
-    "events_with_territory": 135,
-    "territorial_coverage_pct": 41.54,
-    "events_with_occurrence_time": 114,
-    "occurrence_time_coverage_pct": 35.08,
+    "events_with_territory": 133,
+    "territorial_coverage_pct": 41.18,
+    "events_with_occurrence_time": 112,
+    "occurrence_time_coverage_pct": 34.67,
     "temporal_precision": {
       "EXACT": 8,
       "INFERRED_DAY": 27,
-      "MONTH": 27,
+      "MONTH": 28,
       "UNKNOWN": 211,
-      "YEAR": 35,
-      "YEAR_RANGE": 17
+      "YEAR": 33,
+      "YEAR_RANGE": 16
     },
     "longitudinal": {
       "analysis_window": {
         "time_basis": "PUBLICATION_DATE",
-        "dataset_start": "2026-10-16",
+        "dataset_start": "2026-10-17",
         "anchor_date": "2026-11-14",
         "recent_from": "2026-11-08",
         "recent_to": "2026-11-14",
         "baseline_from": "2026-10-11",
         "baseline_to": "2026-11-07",
-        "baseline_observed_from": "2026-10-16",
-        "baseline_observed_days": 23,
+        "baseline_observed_from": "2026-10-17",
+        "baseline_observed_days": 22,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 2111,
-      "recurrent_entities": 190,
-      "phenomenon_windows": 38,
+      "entity_activity_profiles": 2138,
+      "recurrent_entities": 193,
+      "phenomenon_windows": 37,
       "territorial_windows": 274,
-      "event_clusters": 143,
-      "longitudinal_signal_count": 142,
+      "event_clusters": 145,
+      "longitudinal_signal_count": 144,
       "longitudinal_signal_types": {
         "CROSS_SOURCE_EVENT_CLUSTER": 87,
-        "ENTITY_RECURRENCE": 55
+        "ENTITY_RECURRENCE": 57
       }
     },
     "identity_enrichment": {
@@ -72,12 +72,12 @@
       "reference_release_tag": "fusion-v1",
       "reference_asset_digest": "sha256:af79374bebe39e2fd68476ca2b3d9a15b9d39e59671744b95e685c664db01308",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-      "attempted": 645,
-      "resolved": 27,
+      "attempted": 679,
+      "resolved": 26,
       "ambiguous": 9,
-      "no_match": 609,
+      "no_match": 644,
       "invalid_existing_rut_rejected": 0,
-      "rut_exact_entities_after": 27,
+      "rut_exact_entities_after": 26,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
     }
   },
@@ -88,12 +88,12 @@
     "reference_release_tag": "fusion-v1",
     "reference_asset_digest": "sha256:af79374bebe39e2fd68476ca2b3d9a15b9d39e59671744b95e685c664db01308",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-    "attempted": 645,
-    "resolved": 27,
+    "attempted": 679,
+    "resolved": 26,
     "ambiguous": 9,
-    "no_match": 609,
+    "no_match": 644,
     "invalid_existing_rut_rejected": 0,
-    "rut_exact_entities_after": 27,
+    "rut_exact_entities_after": 26,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
   },
   "analysis": {
@@ -124,14 +124,14 @@
     },
     "analysis_window": {
       "time_basis": "PUBLICATION_DATE",
-      "dataset_start": "2026-10-16",
+      "dataset_start": "2026-10-17",
       "anchor_date": "2026-11-14",
       "recent_from": "2026-11-08",
       "recent_to": "2026-11-14",
       "baseline_from": "2026-10-11",
       "baseline_to": "2026-11-07",
-      "baseline_observed_from": "2026-10-16",
-      "baseline_observed_days": 23,
+      "baseline_observed_from": "2026-10-17",
+      "baseline_observed_days": 22,
       "baseline_quality": "PARTIAL"
     }
   },
