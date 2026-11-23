@@ -1,13 +1,13 @@
 {
   "producer_id": "radar_prensa",
   "version": "0.4.1",
-  "generated_at": "2026-11-22T19:46:43.525127Z",
+  "generated_at": "2026-11-23T01:47:23.449358Z",
   "input": "https://raw.githubusercontent.com/smoralesm07-source/Monitor/monitor-state/datos.json",
   "counts": {
     "documents": 302,
     "events": 302,
     "evidence": 302,
-    "entities": 2178,
+    "entities": 2176,
     "territories": 61,
     "entity_mentions": 5353,
     "event_entities": 5353,
@@ -15,13 +15,13 @@
     "relationships": 238,
     "sectors": 9,
     "temporal_assertions": 95,
-    "identity_resolutions": 700,
-    "entity_activity": 2178,
+    "identity_resolutions": 698,
+    "entity_activity": 2176,
     "phenomenon_windows": 39,
     "territorial_windows": 285,
-    "event_clusters": 148,
-    "signals": 479,
-    "longitudinal_signals": 140
+    "event_clusters": 147,
+    "signals": 478,
+    "longitudinal_signals": 139
   },
   "quality": {
     "geography_catalog": {
@@ -54,14 +54,14 @@
         "baseline_observed_days": 23,
         "baseline_quality": "PARTIAL"
       },
-      "entity_activity_profiles": 2178,
+      "entity_activity_profiles": 2176,
       "recurrent_entities": 177,
       "phenomenon_windows": 39,
       "territorial_windows": 285,
-      "event_clusters": 148,
-      "longitudinal_signal_count": 140,
+      "event_clusters": 147,
+      "longitudinal_signal_count": 139,
       "longitudinal_signal_types": {
-        "CROSS_SOURCE_EVENT_CLUSTER": 86,
+        "CROSS_SOURCE_EVENT_CLUSTER": 85,
         "ENTITY_RECURRENCE": 53,
         "PHENOMENON_MOMENTUM": 1
       }
@@ -73,12 +73,12 @@
       "reference_release_tag": "fusion-v1",
       "reference_asset_digest": "sha256:af79374bebe39e2fd68476ca2b3d9a15b9d39e59671744b95e685c664db01308",
       "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-      "attempted": 700,
-      "resolved": 25,
+      "attempted": 698,
+      "resolved": 23,
       "ambiguous": 7,
       "no_match": 668,
       "invalid_existing_rut_rejected": 0,
-      "rut_exact_entities_after": 25,
+      "rut_exact_entities_after": 23,
       "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
     }
   },
@@ -89,12 +89,12 @@
     "reference_release_tag": "fusion-v1",
     "reference_asset_digest": "sha256:af79374bebe39e2fd68476ca2b3d9a15b9d39e59671744b95e685c664db01308",
     "global_entity_key_policy": "ENT-RUT-{RUT_CANONICO_CON_GUION}",
-    "attempted": 700,
-    "resolved": 25,
+    "attempted": 698,
+    "resolved": 23,
     "ambiguous": 7,
     "no_match": 668,
     "invalid_existing_rut_rejected": 0,
-    "rut_exact_entities_after": 25,
+    "rut_exact_entities_after": 23,
     "guardrail": "IDENTITY_ENRICHMENT_REQUIRES_UNIQUE_OFFICIAL_NAME_MATCH_AND_VALID_RUT"
   },
   "analysis": {
